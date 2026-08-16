@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import ContactForm from "@/components/ContactForm";
 import SocialIcons from "@/components/SocialIcons";
 import { contactInfo, formatPhone, phoneHref } from "@/data/contact";
+import { cakes as staticCakes } from "@/data/cakes";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -10,7 +12,39 @@ export const metadata: Metadata = {
     "Request a custom cake quote from Tarto Cakes UG. Call, email, or visit us at Pelican House, Stella — Najjanankumbi.",
 };
 
-export default function ContactPage() {
+async function getCakeOptions() {
+  try {
+    const rows = await prisma.cake.findMany({
+      where: { published: true },
+      orderBy: { name: "asc" },
+      select: { name: true, slug: true },
+    });
+    if (rows.length > 0) return rows;
+  } catch {
+    // fall through to static catalogue
+  }
+  return staticCakes.map((cake) => ({ name: cake.name, slug: cake.slug }));
+}
+
+async function getOccasionOptions() {
+  try {
+    const rows = await prisma.occasion.findMany({
+      where: { active: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    });
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
+export default async function ContactPage() {
+  const [cakeOptions, occasionOptions] = await Promise.all([
+    getCakeOptions(),
+    getOccasionOptions(),
+  ]);
+
   return (
     <>
       <section className="bg-tarto-cream py-14">
@@ -112,7 +146,7 @@ export default function ContactPage() {
                   <p className="mt-6 text-sm text-tarto-ink/60">Loading form...</p>
                 }
               >
-                <ContactForm />
+                <ContactForm cakes={cakeOptions} occasions={occasionOptions} />
               </Suspense>
             </div>
           </div>

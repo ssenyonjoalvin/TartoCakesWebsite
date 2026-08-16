@@ -1,13 +1,5 @@
-import type { Metadata } from "next";
-import AdminComingSoon from "@/components/admin/AdminComingSoon";
-
-export const metadata: Metadata = { title: "Settings" };
+import { redirect } from "next/navigation";
 
 export default function AdminSettingsPage() {
-  return (
-    <AdminComingSoon
-      title="Settings"
-      description="Update contact details, social links, and site preferences."
-    />
-  );
+  redirect("/admin/settings/flavors");
 }

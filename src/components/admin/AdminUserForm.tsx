@@ -17,19 +17,28 @@ type Props = {
     role: AdminRole;
     active: boolean;
   };
+  embedded?: boolean;
+  onCancel?: () => void;
 };
 
 const initialState: UserFormState = {};
 
 const inputClass =
-  "mt-1.5 w-full rounded-lg border border-tarto-ink/15 bg-[#FFF4E5] px-3 py-2.5 text-sm text-tarto-ink outline-none focus:border-tarto-red";
+  "mt-1.5 w-full rounded-xl border border-[#E0E0E0] bg-[#F7F7F7] px-3 py-2.5 text-sm text-tarto-ink outline-none focus:border-tarto-red/40 focus:bg-white";
 
-export default function AdminUserForm({ user }: Props) {
+export default function AdminUserForm({ user, embedded, onCancel }: Props) {
   const action = user ? updateAdminUser : createAdminUser;
   const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
-    <form action={formAction} className="mt-8 max-w-xl space-y-5 rounded-2xl bg-white p-6 shadow-sm">
+    <form
+      action={formAction}
+      className={
+        embedded
+          ? "mt-5 space-y-4"
+          : "mt-6 max-w-xl space-y-5 rounded-2xl border border-[#EBEBEB] bg-white p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
+      }
+    >
       {user ? <input type="hidden" name="id" value={user.id} /> : null}
 
       <div>
@@ -112,20 +121,30 @@ export default function AdminUserForm({ user }: Props) {
         </p>
       ) : null}
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 pt-1">
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-tarto-red px-5 py-2.5 text-sm font-bold text-white hover:bg-tarto-red/90 disabled:opacity-70"
+          className="rounded-xl bg-tarto-red px-5 py-2.5 text-sm font-bold text-white hover:bg-tarto-red/90 disabled:opacity-70"
         >
           {pending ? "Saving..." : user ? "Save changes" : "Add user"}
         </button>
-        <Link
-          href="/admin/users"
-          className="text-sm font-semibold text-tarto-ink/60 hover:text-tarto-red"
-        >
-          Cancel
-        </Link>
+        {onCancel ? (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-sm font-semibold text-tarto-ink/60 hover:text-tarto-red"
+          >
+            Cancel
+          </button>
+        ) : (
+          <Link
+            href="/admin/users"
+            className="text-sm font-semibold text-tarto-ink/60 hover:text-tarto-red"
+          >
+            Cancel
+          </Link>
+        )}
       </div>
     </form>
   );

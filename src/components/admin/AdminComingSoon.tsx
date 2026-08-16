@@ -1,15 +1,30 @@
+import type { ReactNode } from "react";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+
 type Props = {
   title: string;
   description: string;
+  actions?: ReactNode;
 };
 
-export default function AdminComingSoon({ title, description }: Props) {
+export default function AdminComingSoon({
+  title,
+  description,
+  actions,
+}: Props) {
   return (
     <div>
-      <h1 className="text-3xl font-bold text-tarto-ink">{title}</h1>
-      <p className="mt-2 max-w-xl text-sm text-tarto-ink/70">{description}</p>
-      <div className="mt-8 rounded-2xl border border-dashed border-tarto-ink/20 bg-white p-8 text-sm text-tarto-ink/60">
-        This section will be built next.
+      <AdminPageHeader
+        title={title}
+        description={description}
+        actions={actions}
+      />
+      <div className="mt-6 rounded-2xl border border-dashed border-[#E0E0E0] bg-white px-6 py-14 text-center shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
+        <p className="text-sm font-semibold text-[#555]">Coming soon</p>
+        <p className="mx-auto mt-2 max-w-md text-sm text-[#888]">
+          This module will use the same admin layout — table views, filters, and
+          actions — once we wire it to the database.
+        </p>
       </div>
     </div>
   );

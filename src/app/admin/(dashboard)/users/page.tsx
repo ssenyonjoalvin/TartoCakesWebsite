@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
-import { deleteAdminUser } from "./actions";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AddUserDialog from "@/components/admin/AddUserDialog";
+import UserRowActions from "@/components/admin/UserRowActions";
 
 export const metadata: Metadata = { title: "User Management" };
 
@@ -30,92 +31,78 @@ export default async function AdminUsersPage() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold tracking-[0.14em] text-tarto-orange">
-            TEAM
-          </p>
-          <h1 className="mt-2 text-3xl font-bold text-tarto-ink">
-            User Management
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-tarto-ink/70">
-            Track who can sign in to admin, and who authored each blog post.
-          </p>
-        </div>
-        <Link
-          href="/admin/users/new"
-          className="rounded-lg bg-tarto-red px-4 py-2.5 text-sm font-bold text-white hover:bg-tarto-red/90"
-        >
-          Add user
-        </Link>
-      </div>
+      <AdminPageHeader
+        title="User Management"
+        description="Track who can sign in to admin, and who authored each blog post."
+        actions={<AddUserDialog />}
+      />
 
-      <div className="mt-8 overflow-x-auto rounded-2xl bg-white shadow-sm">
-        <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-tarto-ink/10 text-xs font-semibold uppercase tracking-wide text-tarto-ink/55">
-            <tr>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Role</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Last login</th>
-              <th className="px-4 py-3">Posts</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id} className="border-b border-tarto-ink/5 last:border-0">
-                <td className="px-4 py-3 font-semibold text-tarto-ink">
-                  {user.name}
-                  {user.id === session.id ? (
-                    <span className="ml-2 text-xs font-medium text-tarto-orange">
-                      you
-                    </span>
-                  ) : null}
-                </td>
-                <td className="px-4 py-3 text-tarto-ink/75">{user.email}</td>
-                <td className="px-4 py-3">{user.role === "ADMIN" ? "Admin" : "Editor"}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={
-                      user.active
-                        ? "font-medium text-emerald-700"
-                        : "font-medium text-tarto-ink/45"
-                    }
-                  >
-                    {user.active ? "Active" : "Disabled"}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-tarto-ink/70">
-                  {formatDate(user.lastLoginAt)}
-                </td>
-                <td className="px-4 py-3">{user._count.blogPosts}</td>
-                <td className="px-4 py-3 text-right">
-                  <div className="flex justify-end gap-3">
-                    <Link
-                      href={`/admin/users/${user.id}`}
-                      className="font-semibold text-tarto-red hover:underline"
-                    >
-                      Edit
-                    </Link>
-                    {user.id !== session.id ? (
-                      <form action={deleteAdminUser}>
-                        <input type="hidden" name="id" value={user.id} />
-                        <button
-                          type="submit"
-                          className="font-semibold text-tarto-ink/45 hover:text-tarto-red"
-                        >
-                          Remove
-                        </button>
-                      </form>
-                    ) : null}
-                  </div>
-                </td>
+      <div className="mt-6 overflow-hidden rounded-2xl border border-[#EBEBEB] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-[#F0F0F0] text-xs font-semibold uppercase tracking-wide text-[#9A9A9A]">
+                <th className="px-5 py-3.5">Name</th>
+                <th className="px-5 py-3.5">Email</th>
+                <th className="px-5 py-3.5">Role</th>
+                <th className="px-5 py-3.5">Status</th>
+                <th className="px-5 py-3.5">Last login</th>
+                <th className="px-5 py-3.5">Posts</th>
+                <th className="px-5 py-3.5 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr
+                  key={user.id}
+                  className="border-b border-[#F5F5F5] last:border-0"
+                >
+                  <td className="px-5 py-4 font-semibold text-[#2B2B2B]">
+                    {user.name}
+                    {user.id === session.id ? (
+                      <span className="ml-2 text-xs font-medium text-tarto-red">
+                        you
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className="px-5 py-4 text-[#555]">{user.email}</td>
+                  <td className="px-5 py-4 text-[#555]">
+                    {user.role === "ADMIN" ? "Admin" : "Editor"}
+                  </td>
+                  <td className="px-5 py-4">
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                        user.active
+                          ? "bg-[#E8F5EC] text-[#2F6B45]"
+                          : "bg-[#EBEBEB] text-[#777]"
+                      }`}
+                    >
+                      {user.active ? "Active" : "Disabled"}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-[#555]">
+                    {formatDate(user.lastLoginAt)}
+                  </td>
+                  <td className="px-5 py-4 text-[#555]">
+                    {user._count.blogPosts}
+                  </td>
+                  <td className="px-5 py-4">
+                    <UserRowActions
+                      user={{
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role,
+                        active: user.active,
+                      }}
+                      canRemove={user.id !== session.id}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

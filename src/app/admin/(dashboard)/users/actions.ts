@@ -116,13 +116,6 @@ export async function updateAdminUser(
     },
   });
 
-  if (name !== current.name) {
-    await prisma.blogPost.updateMany({
-      where: { authorId: id },
-      data: { author: name },
-    });
-  }
-
   revalidatePath("/admin/users");
   redirect("/admin/users");
 }

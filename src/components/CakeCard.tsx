@@ -1,9 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Cake, formatPrice } from "@/data/cakes";
+import { formatPrice } from "@/data/cakes";
 
 type Props = {
-  cake: Cake;
+  cake: {
+    slug: string;
+    name: string;
+    price: number;
+    image: string;
+  };
 };
 
 export default function CakeCard({ cake }: Props) {
@@ -15,7 +20,7 @@ export default function CakeCard({ cake }: Props) {
           alt={cake.name}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-          className="object-cover transition duration-500 group-hover:scale-105"
+          className="object-cover object-center transition duration-500 group-hover:scale-105"
         />
       </Link>
       <div className="flex flex-1 flex-col p-4 text-center">

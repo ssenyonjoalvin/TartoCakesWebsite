@@ -1,6 +1,6 @@
 import CakeCard from "@/components/CakeCard";
 import HomeHero from "@/components/HomeHero";
-import { cakes } from "@/data/cakes";
+import { getPublishedCakes } from "@/lib/public-cakes";
 
 const features = [
   {
@@ -82,17 +82,10 @@ const features = [
   },
 ];
 
-const bestsellerSlugs = [
-  "red-velvet",
-  "chocolate-cake",
-  "purple-butter-cream",
-  "princess-pink-cake",
-];
-
-export default function HomePage() {
-  const bestsellers = bestsellerSlugs
-    .map((slug) => cakes.find((cake) => cake.slug === slug))
-    .filter(Boolean);
+export default async function HomePage() {
+  const published = await getPublishedCakes();
+  const featured = published.filter((cake) => cake.featured);
+  const bestsellers = (featured.length > 0 ? featured : published).slice(0, 4);
 
   return (
     <>
@@ -125,9 +118,9 @@ export default function HomePage() {
             OUR BESTSELLERS
           </h2>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {bestsellers.map((cake) =>
-              cake ? <CakeCard key={cake.id} cake={cake} /> : null
-            )}
+            {bestsellers.map((cake) => (
+              <CakeCard key={cake.id} cake={cake} />
+            ))}
           </div>
         </div>
       </section>

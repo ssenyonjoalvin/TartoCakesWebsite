@@ -73,6 +73,7 @@ export default function HomeHero() {
               alt={slide.alt}
               fill
               priority={index === 0}
+              loading={index === 0 ? undefined : "eager"}
               quality={95}
               sizes="(max-width: 1024px) 100vw, 58vw"
               className={`object-cover transition-opacity duration-700 ${slide.position} ${

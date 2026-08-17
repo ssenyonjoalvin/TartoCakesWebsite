@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Pacifico, Poppins } from "next/font/google";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -35,10 +33,8 @@ export default function RootLayout({
       lang="en"
       className={`${poppins.variable} ${brandScript.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full w-full flex-col bg-tarto-cream font-sans text-tarto-ink">
-        <Header />
-        <main className="w-full flex-1">{children}</main>
-        <Footer />
+      <body className="min-h-full w-full bg-tarto-cream font-sans text-tarto-ink">
+        {children}
       </body>
     </html>
   );

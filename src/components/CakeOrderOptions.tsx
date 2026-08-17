@@ -49,8 +49,8 @@ const highlights = [
 ];
 
 export default function CakeOrderOptions({ cake }: Props) {
-  const [size, setSize] = useState(cake.sizes[0]);
-  const [flavor, setFlavor] = useState(cake.flavors[0]);
+  const [size, setSize] = useState(cake.sizes[0] ?? "");
+  const [flavor, setFlavor] = useState(cake.flavors[0] ?? "");
 
   return (
     <div className="mt-6">
@@ -59,20 +59,24 @@ export default function CakeOrderOptions({ cake }: Props) {
           Select Size
         </h2>
         <div className="mt-3 flex flex-wrap gap-2.5">
-          {cake.sizes.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setSize(option)}
-              className={`min-w-[3.25rem] rounded-lg border px-3.5 py-2.5 text-sm font-semibold transition ${
-                size === option
-                  ? "border-tarto-red bg-tarto-red text-white"
-                  : "border-tarto-ink/15 bg-white text-tarto-ink hover:border-tarto-red/40"
-              }`}
-            >
-              {option}
-            </button>
-          ))}
+          {cake.sizes.length === 0 ? (
+            <p className="text-sm text-tarto-ink/60">Sizes available on request.</p>
+          ) : (
+            cake.sizes.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setSize(option)}
+                className={`min-w-[3.25rem] rounded-lg border px-3.5 py-2.5 text-sm font-semibold transition ${
+                  size === option
+                    ? "border-tarto-red bg-tarto-red text-white"
+                    : "border-tarto-ink/15 bg-white text-tarto-ink hover:border-tarto-red/40"
+                }`}
+              >
+                {option}
+              </button>
+            ))
+          )}
         </div>
       </div>
 
@@ -81,20 +85,24 @@ export default function CakeOrderOptions({ cake }: Props) {
           Available Flavors
         </h2>
         <div className="mt-3 flex flex-wrap gap-2">
-          {cake.flavors.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setFlavor(option)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-                flavor === option
-                  ? "bg-tarto-red text-white"
-                  : "bg-tarto-ink/8 text-tarto-ink hover:bg-tarto-ink/12"
-              }`}
-            >
-              {option}
-            </button>
-          ))}
+          {cake.flavors.length === 0 ? (
+            <p className="text-sm text-tarto-ink/60">Flavours available on request.</p>
+          ) : (
+            cake.flavors.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setFlavor(option)}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                  flavor === option
+                    ? "bg-tarto-red text-white"
+                    : "bg-tarto-ink/8 text-tarto-ink hover:bg-tarto-ink/12"
+                }`}
+              >
+                {option}
+              </button>
+            ))
+          )}
         </div>
       </div>
 

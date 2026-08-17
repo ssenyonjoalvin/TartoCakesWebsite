@@ -8,6 +8,8 @@ import {
   type BlogFormState,
   type BlogSectionInput,
 } from "@/app/admin/(dashboard)/blog/actions";
+import MediaLibraryPicker from "@/components/admin/MediaLibraryPicker";
+import type { MediaItem } from "@/lib/media-types";
 
 const initialState: BlogFormState = {};
 
@@ -43,9 +45,15 @@ type Props = {
   mode: "create" | "edit";
   post?: BlogFormPost;
   occasions: Option[];
+  libraryItems: MediaItem[];
 };
 
-export default function BlogPostForm({ mode, post, occasions }: Props) {
+export default function BlogPostForm({
+  mode,
+  post,
+  occasions,
+  libraryItems,
+}: Props) {
   const action = mode === "edit" ? updateBlogPost : createBlogPost;
   const [state, formAction, pending] = useActionState(action, initialState);
   const [sections, setSections] = useState<BlogSectionInput[]>(
@@ -58,8 +66,15 @@ export default function BlogPostForm({ mode, post, occasions }: Props) {
   );
   const [keepCover, setKeepCover] = useState(Boolean(post?.coverImage));
   const [keptGallery, setKeptGallery] = useState<string[]>(post?.gallery ?? []);
+  const [libraryCoverImage, setLibraryCoverImage] = useState<string | null>(null);
+  const [libraryGalleryImages, setLibraryGalleryImages] = useState<string[]>([]);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+
+  const hasCover =
+    (keepCover && Boolean(post?.coverImage)) ||
+    Boolean(libraryCoverImage) ||
+    Boolean(coverPreview);
 
   return (
     <form action={formAction} className="mt-8 space-y-8">
@@ -166,6 +181,26 @@ export default function BlogPostForm({ mode, post, occasions }: Props) {
         <p className="mt-1 text-xs text-[#888]">
           Hero image at the top of the article.
         </p>
+        <div className="mt-3">
+          <MediaLibraryPicker
+            items={libraryItems}
+            selected={libraryCoverImage ? [libraryCoverImage] : []}
+            onChange={(urls) => {
+              const url = urls[0] ?? null;
+              setLibraryCoverImage(url);
+              if (url) {
+                setKeepCover(false);
+                setCoverPreview(null);
+              }
+            }}
+            multiple={false}
+            max={1}
+            buttonLabel="Choose cover from library"
+          />
+        </div>
+        {libraryCoverImage ? (
+          <input type="hidden" name="libraryCoverImage" value={libraryCoverImage} />
+        ) : null}
         {post?.coverImage && keepCover ? (
           <div className="mt-3 max-w-sm overflow-hidden rounded-xl bg-[#FAFAFA]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -187,16 +222,39 @@ export default function BlogPostForm({ mode, post, occasions }: Props) {
             </label>
           </div>
         ) : null}
+        {libraryCoverImage ? (
+          <div className="mt-3 max-w-sm overflow-hidden rounded-xl bg-[#FAFAFA]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={libraryCoverImage}
+              alt=""
+              className="h-40 w-full object-cover"
+            />
+            <div className="flex items-center justify-between px-3 py-2">
+              <p className="text-xs text-[#666]">From library</p>
+              <button
+                type="button"
+                onClick={() => setLibraryCoverImage(null)}
+                className="text-xs font-semibold text-tarto-red hover:underline"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ) : null}
         <input
           name="coverImageFile"
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif"
-          required={mode === "create" || !keepCover}
+          required={!hasCover}
           className={`${inputClass} mt-3 file:mr-3 file:rounded-lg file:border-0 file:bg-tarto-red file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white`}
           onChange={(event) => {
             const file = event.target.files?.[0];
             setCoverPreview(file ? URL.createObjectURL(file) : null);
-            if (file) setKeepCover(false);
+            if (file) {
+              setKeepCover(false);
+              setLibraryCoverImage(null);
+            }
           }}
         />
         {coverPreview ? (
@@ -215,6 +273,18 @@ export default function BlogPostForm({ mode, post, occasions }: Props) {
           Shown after the first section (detail / process photos). Two images
           work best.
         </p>
+        <div className="mt-3">
+          <MediaLibraryPicker
+            items={libraryItems}
+            selected={libraryGalleryImages}
+            onChange={setLibraryGalleryImages}
+            max={12}
+            buttonLabel="Choose gallery from library"
+          />
+        </div>
+        {libraryGalleryImages.map((url) => (
+          <input key={url} type="hidden" name="libraryGalleryImages" value={url} />
+        ))}
         {post?.gallery?.length ? (
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {post.gallery.map((src) => {
@@ -251,6 +321,34 @@ export default function BlogPostForm({ mode, post, occasions }: Props) {
                 </label>
               );
             })}
+          </div>
+        ) : null}
+        {libraryGalleryImages.length > 0 ? (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {libraryGalleryImages.map((src) => (
+              <div key={src} className="overflow-hidden rounded-xl bg-[#FAFAFA]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt=""
+                  className="h-28 w-full object-cover"
+                />
+                <div className="flex items-center justify-between px-3 py-2">
+                  <p className="text-xs text-[#666]">From library</p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setLibraryGalleryImages((current) =>
+                        current.filter((item) => item !== src)
+                      )
+                    }
+                    className="text-xs font-semibold text-tarto-red hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         ) : null}
         <input

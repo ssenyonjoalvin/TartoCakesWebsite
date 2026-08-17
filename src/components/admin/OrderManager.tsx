@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import TablePagination from "@/components/admin/TablePagination";
+import { useTablePagination } from "@/components/admin/useTablePagination";
 import { updateOrderStatus } from "@/app/admin/(dashboard)/orders/actions";
 
 export type OrderUiStatus = "new" | "responded" | "fulfilled" | "cancelled";
@@ -13,6 +15,7 @@ export type OrderRow = {
   email: string;
   phone: string;
   dateLabel: string;
+  eventDateLabel: string | null;
   occasion: string;
   occasionTone: "wedding" | "birthday" | "corporate" | "anniversary" | "custom";
   status: OrderUiStatus;
@@ -21,6 +24,7 @@ export type OrderRow = {
   cakeName: string | null;
   size: string | null;
   flavor: string | null;
+  referenceImages: string[];
   avatarTone: string;
 };
 
@@ -120,10 +124,12 @@ function exportCsv(rows: OrderRow[]) {
     "Email",
     "Phone",
     "Date Received",
+    "Needed By",
     "Occasion",
     "Status",
     "Cake",
-    "Message",
+    "Cake wording",
+    "Reference photos",
   ];
   const lines = rows.map((row) =>
     [
@@ -132,10 +138,12 @@ function exportCsv(rows: OrderRow[]) {
       row.email,
       row.phone,
       row.dateLabel,
+      row.eventDateLabel ?? "",
       row.occasion,
       statusLabels[row.status],
       row.cakeName ?? "",
       row.message.replace(/\s+/g, " ").trim(),
+      row.referenceImages.join(" "),
     ]
       .map((value) => `"${String(value).replace(/"/g, '""')}"`)
       .join(",")
@@ -151,6 +159,150 @@ function exportCsv(rows: OrderRow[]) {
   URL.revokeObjectURL(url);
 }
 
+function OrderRowActionsMenu({
+  order,
+  open,
+  onToggle,
+  onClose,
+  onViewDetails,
+}: {
+  order: OrderRow;
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  onViewDetails: () => void;
+}) {
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuStyle, setMenuStyle] = useState<{ top: number; left: number } | null>(
+    null
+  );
+
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current || !menuRef.current) {
+      setMenuStyle(null);
+      return;
+    }
+
+    function updatePosition() {
+      const trigger = triggerRef.current;
+      const menu = menuRef.current;
+      if (!trigger || !menu) return;
+
+      const triggerRect = trigger.getBoundingClientRect();
+      const menuHeight = menu.offsetHeight;
+      const menuWidth = menu.offsetWidth;
+      const gap = 8;
+      const spaceBelow = window.innerHeight - triggerRect.bottom;
+      const spaceAbove = triggerRect.top;
+      const openUpward = spaceBelow < menuHeight + gap && spaceAbove > spaceBelow;
+
+      let top = openUpward
+        ? triggerRect.top - menuHeight - gap
+        : triggerRect.bottom + gap;
+      let left = triggerRect.right - menuWidth;
+
+      top = Math.max(gap, Math.min(top, window.innerHeight - menuHeight - gap));
+      left = Math.max(gap, Math.min(left, window.innerWidth - menuWidth - gap));
+
+      setMenuStyle({ top, left });
+    }
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open, order.id, order.status]);
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        title="More"
+        aria-label={`More actions for ${order.code}`}
+        aria-expanded={open}
+        onClick={onToggle}
+        className="rounded-lg p-2 text-[#777] transition hover:bg-[#F5F5F5]"
+      >
+        <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden>
+          <circle cx="12" cy="5" r="1.5" />
+          <circle cx="12" cy="12" r="1.5" />
+          <circle cx="12" cy="19" r="1.5" />
+        </svg>
+      </button>
+
+      {open ? (
+        <>
+          <button
+            type="button"
+            aria-label="Close menu"
+            className="fixed inset-0 z-40 cursor-default"
+            onClick={onClose}
+          />
+          <div
+            ref={menuRef}
+            style={
+              menuStyle
+                ? { top: menuStyle.top, left: menuStyle.left }
+                : { visibility: "hidden" }
+            }
+            className="fixed z-50 min-w-[160px] rounded-xl border border-[#E8E8E8] bg-white py-1 shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
+          >
+            {order.status === "new" ? (
+              <form action={updateOrderStatus}>
+                <input type="hidden" name="id" value={order.id} />
+                <input type="hidden" name="status" value="CONTACTED" />
+                <button
+                  type="submit"
+                  className="block w-full px-4 py-2 text-left text-sm text-[#444] hover:bg-[#F7F7F7]"
+                >
+                  Mark responded
+                </button>
+              </form>
+            ) : null}
+            {order.status !== "fulfilled" ? (
+              <form action={updateOrderStatus}>
+                <input type="hidden" name="id" value={order.id} />
+                <input type="hidden" name="status" value="COMPLETED" />
+                <button
+                  type="submit"
+                  className="block w-full px-4 py-2 text-left text-sm text-[#444] hover:bg-[#F7F7F7]"
+                >
+                  Mark fulfilled
+                </button>
+              </form>
+            ) : null}
+            {order.status !== "new" ? (
+              <form action={updateOrderStatus}>
+                <input type="hidden" name="id" value={order.id} />
+                <input type="hidden" name="status" value="NEW" />
+                <button
+                  type="submit"
+                  className="block w-full px-4 py-2 text-left text-sm text-[#444] hover:bg-[#F7F7F7]"
+                >
+                  Mark as new
+                </button>
+              </form>
+            ) : null}
+            <button
+              type="button"
+              onClick={onViewDetails}
+              className="block w-full px-4 py-2 text-left text-sm text-[#444] hover:bg-[#F7F7F7]"
+            >
+              View details
+            </button>
+          </div>
+        </>
+      ) : null}
+    </>
+  );
+}
+
 export default function OrderManager({ orders, stats }: Props) {
   const [filter, setFilter] =
     useState<(typeof statusFilters)[number]["id"]>("all");
@@ -162,43 +314,26 @@ export default function OrderManager({ orders, stats }: Props) {
     return orders.filter((order) => order.status === filter);
   }, [orders, filter]);
 
+  const pagination = useTablePagination(visible, filter);
+
   return (
     <div>
       <AdminPageHeader
         title="Order Management"
         description="Manage incoming requests and custom cake quotes."
         actions={
-          <>
-            <button
-              type="button"
-              onClick={() =>
-                document.getElementById("order-status-filters")?.scrollIntoView({
-                  behavior: "smooth",
-                  block: "center",
-                })
-              }
-              className="inline-flex items-center gap-2 rounded-xl border border-[#E0E0E0] bg-white px-4 py-2.5 text-sm font-semibold text-[#333] transition hover:bg-[#F7F7F7]"
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-2" aria-hidden>
-                <path d="M4 6h16" />
-                <path d="M7 12h10" />
-                <path d="M10 18h4" />
-              </svg>
-              Filter
-            </button>
-            <button
-              type="button"
-              onClick={() => exportCsv(visible)}
-              className="inline-flex items-center gap-2 rounded-xl border border-[#E0E0E0] bg-white px-4 py-2.5 text-sm font-semibold text-[#333] transition hover:bg-[#F7F7F7]"
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-2" aria-hidden>
-                <path d="M12 4v10" />
-                <path d="m8 10 4 4 4-4" />
-                <path d="M5 18h14" />
-              </svg>
-              Export
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={() => exportCsv(visible)}
+            className="inline-flex items-center gap-2 rounded-xl border border-[#E0E0E0] bg-white px-4 py-2.5 text-sm font-semibold text-[#333] transition hover:bg-[#F7F7F7]"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-2" aria-hidden>
+              <path d="M12 4v10" />
+              <path d="m8 10 4 4 4-4" />
+              <path d="M5 18h14" />
+            </svg>
+            Export
+          </button>
         }
       />
 
@@ -304,20 +439,21 @@ export default function OrderManager({ orders, stats }: Props) {
                 <th className="px-5 py-3.5">Order ID</th>
                 <th className="px-5 py-3.5">Customer</th>
                 <th className="px-5 py-3.5">Date Received</th>
+                <th className="px-5 py-3.5">Needed By</th>
                 <th className="px-5 py-3.5">Occasion</th>
                 <th className="px-5 py-3.5">Status</th>
                 <th className="px-5 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {visible.length === 0 ? (
+              {pagination.total === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-[#888]">
+                    <td colSpan={7} className="px-5 py-12 text-center text-[#888]">
                     No orders in this filter yet.
                   </td>
                 </tr>
               ) : (
-                visible.map((order) => (
+                pagination.items.map((order) => (
                   <tr
                     key={order.id}
                     className="border-b border-[#F5F5F5] last:border-0"
@@ -341,6 +477,9 @@ export default function OrderManager({ orders, stats }: Props) {
                       </div>
                     </td>
                     <td className="px-5 py-4 text-[#555]">{order.dateLabel}</td>
+                    <td className="px-5 py-4 text-[#555]">
+                      {order.eventDateLabel ?? "—"}
+                    </td>
                     <td className="px-5 py-4">
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
@@ -393,78 +532,20 @@ export default function OrderManager({ orders, stats }: Props) {
                             <circle cx="12" cy="12" r="2.5" />
                           </svg>
                         </button>
-                        <button
-                          type="button"
-                          title="More"
-                          aria-label={`More actions for ${order.code}`}
-                          onClick={() =>
+                        <OrderRowActionsMenu
+                          order={order}
+                          open={menuId === order.id}
+                          onToggle={() =>
                             setMenuId((current) =>
                               current === order.id ? null : order.id
                             )
                           }
-                          className="rounded-lg p-2 text-[#777] transition hover:bg-[#F5F5F5]"
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="h-4 w-4 fill-current"
-                            aria-hidden
-                          >
-                            <circle cx="12" cy="5" r="1.5" />
-                            <circle cx="12" cy="12" r="1.5" />
-                            <circle cx="12" cy="19" r="1.5" />
-                          </svg>
-                        </button>
-
-                        {menuId === order.id ? (
-                          <div className="absolute right-0 top-10 z-20 min-w-[160px] rounded-xl border border-[#E8E8E8] bg-white py-1 shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
-                            {order.status === "new" ? (
-                              <form action={updateOrderStatus}>
-                                <input type="hidden" name="id" value={order.id} />
-                                <input type="hidden" name="status" value="CONTACTED" />
-                                <button
-                                  type="submit"
-                                  className="block w-full px-4 py-2 text-left text-sm text-[#444] hover:bg-[#F7F7F7]"
-                                >
-                                  Mark responded
-                                </button>
-                              </form>
-                            ) : null}
-                            {order.status !== "fulfilled" ? (
-                              <form action={updateOrderStatus}>
-                                <input type="hidden" name="id" value={order.id} />
-                                <input type="hidden" name="status" value="COMPLETED" />
-                                <button
-                                  type="submit"
-                                  className="block w-full px-4 py-2 text-left text-sm text-[#444] hover:bg-[#F7F7F7]"
-                                >
-                                  Mark fulfilled
-                                </button>
-                              </form>
-                            ) : null}
-                            {order.status !== "new" ? (
-                              <form action={updateOrderStatus}>
-                                <input type="hidden" name="id" value={order.id} />
-                                <input type="hidden" name="status" value="NEW" />
-                                <button
-                                  type="submit"
-                                  className="block w-full px-4 py-2 text-left text-sm text-[#444] hover:bg-[#F7F7F7]"
-                                >
-                                  Mark as new
-                                </button>
-                              </form>
-                            ) : null}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setMenuId(null);
-                                setSelected(order);
-                              }}
-                              className="block w-full px-4 py-2 text-left text-sm text-[#444] hover:bg-[#F7F7F7]"
-                            >
-                              View details
-                            </button>
-                          </div>
-                        ) : null}
+                          onClose={() => setMenuId(null)}
+                          onViewDetails={() => {
+                            setMenuId(null);
+                            setSelected(order);
+                          }}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -473,6 +554,16 @@ export default function OrderManager({ orders, stats }: Props) {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          total={pagination.total}
+          from={pagination.from}
+          to={pagination.to}
+          onPageChange={pagination.setPage}
+          label="orders"
+        />
       </div>
 
       {selected ? (
@@ -604,19 +695,56 @@ export default function OrderManager({ orders, stats }: Props) {
                         {selected.flavor}
                       </span>
                     ) : null}
+                    {selected.eventDateLabel ? (
+                      <span className="inline-flex items-center rounded-full bg-[#FFF3E8] px-3 py-1.5 text-xs font-semibold text-[#8A4A12]">
+                        Needed {selected.eventDateLabel}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </section>
 
               <section>
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A0A0A0]">
-                  Customer message
+                  Words on the cake
                 </h3>
                 <div className="mt-2.5 rounded-2xl border border-[#F3E8D8] bg-[#FFFBF4] px-4 py-3.5">
                   <p className="text-sm leading-relaxed text-[#3A3A3A]">
-                    {selected.message || "No message provided."}
+                    {selected.message
+                      ? `“${selected.message}”`
+                      : "No inscription requested."}
                   </p>
                 </div>
+              </section>
+
+              <section>
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A0A0A0]">
+                  Cake photos from customer
+                </h3>
+                {selected.referenceImages.length > 0 ? (
+                  <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+                    {selected.referenceImages.map((src) => (
+                      <a
+                        key={src}
+                        href={src}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="overflow-hidden rounded-2xl border border-[#F0F0F0] bg-[#FAFAFA]"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={src}
+                          alt="Customer cake reference"
+                          className="h-32 w-full object-cover"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-2.5 rounded-2xl border border-dashed border-[#E8E8E8] bg-[#FAFAFA] px-4 py-3.5 text-sm text-[#888]">
+                    No reference photos attached.
+                  </p>
+                )}
               </section>
             </div>
 

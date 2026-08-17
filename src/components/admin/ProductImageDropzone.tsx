@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import MediaLibraryPicker from "@/components/admin/MediaLibraryPicker";
+import type { MediaItem } from "@/lib/media-types";
 
 export const MAX_PRODUCT_IMAGES = 12;
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -15,6 +17,9 @@ type Props = {
   existingImages: string[];
   keptImages: string[];
   onKeptImagesChange: (images: string[]) => void;
+  libraryImages: string[];
+  onLibraryImagesChange: (images: string[]) => void;
+  libraryItems: MediaItem[];
   files: File[];
   onFilesChange: (files: File[]) => void;
   error?: string;
@@ -25,9 +30,10 @@ type Props = {
 export function validateProductImageFiles(
   files: File[],
   keptCount: number,
+  libraryCount: number,
   requireAtLeastOne: boolean
 ): string | undefined {
-  if (files.length + keptCount > MAX_PRODUCT_IMAGES) {
+  if (files.length + keptCount + libraryCount > MAX_PRODUCT_IMAGES) {
     return `You can add up to ${MAX_PRODUCT_IMAGES} images per product.`;
   }
   for (const file of files) {
@@ -38,7 +44,7 @@ export function validateProductImageFiles(
       return "Each image must be under 5MB.";
     }
   }
-  if (requireAtLeastOne && files.length + keptCount === 0) {
+  if (requireAtLeastOne && files.length + keptCount + libraryCount === 0) {
     return "Upload at least one product image.";
   }
   return undefined;
@@ -52,6 +58,9 @@ export default function ProductImageDropzone({
   existingImages,
   keptImages,
   onKeptImagesChange,
+  libraryImages,
+  onLibraryImagesChange,
+  libraryItems,
   files,
   onFilesChange,
   error,
@@ -83,7 +92,7 @@ export default function ProductImageDropzone({
 
   const remainingSlots = Math.max(
     0,
-    MAX_PRODUCT_IMAGES - keptImages.length - files.length
+    MAX_PRODUCT_IMAGES - keptImages.length - libraryImages.length - files.length
   );
 
   function addFiles(incoming: FileList | File[]) {
@@ -131,7 +140,7 @@ export default function ProductImageDropzone({
 
   function toggleKept(src: string, keep: boolean) {
     if (keep) {
-      if (keptImages.length + files.length >= MAX_PRODUCT_IMAGES) {
+      if (keptImages.length + libraryImages.length + files.length >= MAX_PRODUCT_IMAGES) {
         onError(`You can add up to ${MAX_PRODUCT_IMAGES} images per product.`);
         return;
       }
@@ -144,16 +153,43 @@ export default function ProductImageDropzone({
     onError(undefined);
   }
 
+  function removeLibraryImage(url: string) {
+    onLibraryImagesChange(libraryImages.filter((item) => item !== url));
+    onError(undefined);
+  }
+
   return (
     <div>
       <p className="text-sm font-semibold text-[#333]">
         Images <span className="text-tarto-red">*</span>
       </p>
       <p className="mt-1 text-xs text-[#888]">
-        Drag and drop multiple photos, or click to browse. Up to{" "}
-        {MAX_PRODUCT_IMAGES} images (JPG, PNG, WEBP, GIF · max 5MB each). The
-        first image is the main photo.
+        Drag and drop multiple photos, choose from the media library, or click to
+        browse. Up to {MAX_PRODUCT_IMAGES} images (JPG, PNG, WEBP, GIF · max 5MB
+        each). The first image is the main photo.
       </p>
+
+      <div className="mt-3">
+        <MediaLibraryPicker
+          items={libraryItems}
+          selected={libraryImages}
+          onChange={(urls) => {
+            const limit = MAX_PRODUCT_IMAGES - keptImages.length - files.length;
+            const next = urls.slice(0, Math.max(0, limit));
+            if (urls.length > next.length) {
+              onError(`You can add up to ${MAX_PRODUCT_IMAGES} images per product.`);
+            } else {
+              onError(undefined);
+            }
+            onLibraryImagesChange(next);
+          }}
+          max={MAX_PRODUCT_IMAGES}
+        />
+      </div>
+
+      {libraryImages.map((url) => (
+        <input key={url} type="hidden" name="libraryImages" value={url} />
+      ))}
 
       {existingImages.length > 0 ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -263,7 +299,12 @@ export default function ProductImageDropzone({
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif"
           multiple
-          required={required && keptImages.length === 0 && files.length === 0}
+          required={
+            required &&
+            keptImages.length === 0 &&
+            libraryImages.length === 0 &&
+            files.length === 0
+          }
           aria-invalid={Boolean(error)}
           className="sr-only"
           onChange={(event) => {
@@ -273,11 +314,51 @@ export default function ProductImageDropzone({
         />
       </label>
 
+      {libraryImages.length > 0 ? (
+        <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {libraryImages.map((src, index) => {
+            const isMain =
+              keptImages.length === 0 && files.length === 0 && index === 0;
+            return (
+              <div
+                key={src}
+                className="relative overflow-hidden rounded-xl bg-[#FAFAFA]"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt=""
+                  className="h-32 w-full object-cover"
+                />
+                {isMain ? (
+                  <span className="absolute left-2 top-2 rounded-md bg-tarto-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                    Main
+                  </span>
+                ) : null}
+                <div className="flex items-center justify-between gap-2 px-2 py-2">
+                  <p className="truncate text-xs text-[#666]">From library</p>
+                  <button
+                    type="button"
+                    onClick={() => removeLibraryImage(src)}
+                    className="shrink-0 text-xs font-semibold text-tarto-red hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+
       {files.length > 0 ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {files.map((file, index) => {
             const preview = previews.find((item) => item.key === fileKey(file));
-            const isMain = keptImages.length === 0 && index === 0;
+            const isMain =
+              keptImages.length === 0 &&
+              libraryImages.length === 0 &&
+              index === 0;
             return (
               <div
                 key={fileKey(file)}
@@ -319,7 +400,8 @@ export default function ProductImageDropzone({
       ) : null}
 
       <p className="mt-2 text-xs text-[#999]">
-        {keptImages.length + files.length} / {MAX_PRODUCT_IMAGES} images
+        {keptImages.length + libraryImages.length + files.length} /{" "}
+        {MAX_PRODUCT_IMAGES} images
       </p>
     </div>
   );

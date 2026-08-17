@@ -56,6 +56,11 @@ function startOfMonth() {
   return date;
 }
 
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string" && item.length > 0);
+}
+
 export default async function AdminOrdersPage() {
   const today = startOfToday();
   const monthStart = startOfMonth();
@@ -103,6 +108,13 @@ export default async function AdminOrdersPage() {
         hour: "numeric",
         minute: "2-digit",
       }),
+      eventDateLabel: row.eventDate
+        ? row.eventDate.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : null,
       occasion,
       occasionTone: occasionToneFromLabel(
         `${occasion} ${row.occasion?.slug ?? ""}`
@@ -113,6 +125,7 @@ export default async function AdminOrdersPage() {
       cakeName: row.cakeName ?? row.cake?.name ?? null,
       size: row.size,
       flavor: row.flavor,
+      referenceImages: asStringArray(row.referenceImages),
       avatarTone: tones[index % tones.length],
     };
   });

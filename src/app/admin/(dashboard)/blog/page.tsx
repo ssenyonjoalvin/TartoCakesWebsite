@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import BlogManager, { type BlogRow } from "@/components/admin/BlogManager";
 
+import { TABLE_PAGE_SIZE } from "@/lib/table-pagination";
+
 export const metadata: Metadata = { title: "Blog Management" };
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = TABLE_PAGE_SIZE;
 
 type Props = {
   searchParams: Promise<{ page?: string }>;

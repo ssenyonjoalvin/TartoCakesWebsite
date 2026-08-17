@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
 import { filesFromFormData, saveBlogImages } from "@/lib/blog-images";
+import { parseMediaUrls } from "@/lib/media";
 import type { BlogStatus } from "@/generated/prisma/client";
 
 export type BlogFormState = {
@@ -72,9 +73,12 @@ function parseKeepImages(formData: FormData, field: string) {
 async function resolveImageField(
   formData: FormData,
   fileField: string,
-  keepField: string
+  keepField: string,
+  libraryField?: string,
+  single = false
 ) {
   const kept = parseKeepImages(formData, keepField);
+  const library = libraryField ? parseMediaUrls(formData, libraryField) : [];
   const uploadedFiles = filesFromFormData(formData, fileField);
   let uploaded: string[] = [];
   try {
@@ -85,7 +89,12 @@ async function resolveImageField(
         error instanceof Error ? error.message : "Could not upload images.",
     } as const;
   }
-  return { images: [...kept, ...uploaded] } as const;
+
+  const images = single
+    ? [...library, ...kept, ...uploaded].slice(0, 1)
+    : [...kept, ...library, ...uploaded];
+
+  return { images } as const;
 }
 
 export async function createBlogPost(
@@ -118,7 +127,9 @@ export async function createBlogPost(
   const coverResult = await resolveImageField(
     formData,
     "coverImageFile",
-    "keepCoverImage"
+    "keepCoverImage",
+    "libraryCoverImage",
+    true
   );
   if ("error" in coverResult) return { error: coverResult.error };
   const coverImage = coverResult.images[0] ?? "";
@@ -127,7 +138,8 @@ export async function createBlogPost(
   const galleryResult = await resolveImageField(
     formData,
     "galleryImageFiles",
-    "keepGalleryImages"
+    "keepGalleryImages",
+    "libraryGalleryImages"
   );
   if ("error" in galleryResult) return { error: galleryResult.error };
   const gallery = galleryResult.images;
@@ -199,7 +211,9 @@ export async function updateBlogPost(
   const coverResult = await resolveImageField(
     formData,
     "coverImageFile",
-    "keepCoverImage"
+    "keepCoverImage",
+    "libraryCoverImage",
+    true
   );
   if ("error" in coverResult) return { error: coverResult.error };
   const coverImage = coverResult.images[0] ?? "";
@@ -208,7 +222,8 @@ export async function updateBlogPost(
   const galleryResult = await resolveImageField(
     formData,
     "galleryImageFiles",
-    "keepGalleryImages"
+    "keepGalleryImages",
+    "libraryGalleryImages"
   );
   if ("error" in galleryResult) return { error: galleryResult.error };
   const gallery = galleryResult.images;

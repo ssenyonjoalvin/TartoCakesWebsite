@@ -8,6 +8,7 @@ import {
   filesFromFormData,
   saveProductImages,
 } from "@/lib/product-images";
+import { parseMediaUrls } from "@/lib/media";
 import type { CakeCategory } from "@/generated/prisma/client";
 
 export type ProductFieldErrors = {
@@ -147,9 +148,10 @@ function validateProductFields(formData: FormData) {
 
 async function resolveImages(formData: FormData, requireAtLeastOne: boolean) {
   const kept = parseKeepImages(formData);
+  const library = parseMediaUrls(formData, "libraryImages");
   const uploadedFiles = filesFromFormData(formData, "imageFiles");
 
-  if (kept.length + uploadedFiles.length > 12) {
+  if (kept.length + library.length + uploadedFiles.length > 12) {
     return {
       fieldErrors: {
         images: "You can add up to 12 images per product.",
@@ -171,7 +173,7 @@ async function resolveImages(formData: FormData, requireAtLeastOne: boolean) {
     } as const;
   }
 
-  const images = [...kept, ...uploaded];
+  const images = [...kept, ...library, ...uploaded];
   if (requireAtLeastOne && images.length === 0) {
     return {
       fieldErrors: {

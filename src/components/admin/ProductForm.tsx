@@ -12,6 +12,7 @@ import type { ProductOption, ProductRow } from "@/components/admin/product-types
 import ProductImageDropzone, {
   validateProductImageFiles,
 } from "@/components/admin/ProductImageDropzone";
+import type { MediaItem } from "@/lib/media-types";
 
 const initialState: ProductFormState = {};
 
@@ -30,6 +31,7 @@ type Props = {
   occasions: ProductOption[];
   flavors: ProductOption[];
   sizes: ProductOption[];
+  libraryItems: MediaItem[];
 };
 
 function FieldError({ message }: { message?: string }) {
@@ -44,6 +46,7 @@ function FieldError({ message }: { message?: string }) {
 function validateClientForm(
   formData: FormData,
   keptImages: string[],
+  libraryImages: string[],
   imageFiles: File[],
   mode: "create" | "edit"
 ): ProductFieldErrors {
@@ -93,6 +96,7 @@ function validateClientForm(
   const imageError = validateProductImageFiles(
     imageFiles,
     keptImages.length,
+    libraryImages.length,
     mode === "create" || keptImages.length === 0
   );
   if (imageError) fieldErrors.images = imageError;
@@ -106,6 +110,7 @@ export default function ProductForm({
   occasions,
   flavors,
   sizes,
+  libraryItems,
 }: Props) {
   const action = mode === "edit" ? updateProduct : createProduct;
   const [state, formAction, pending] = useActionState(action, initialState);
@@ -114,6 +119,7 @@ export default function ProductForm({
     () => new Set()
   );
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [libraryImages, setLibraryImages] = useState<string[]>([]);
   const existingImages = useMemo(
     () =>
       product?.images?.length
@@ -167,6 +173,7 @@ export default function ProductForm({
         const errors = validateClientForm(
           formData,
           keptImages,
+          libraryImages,
           imageFiles,
           mode
         );
@@ -302,6 +309,9 @@ export default function ProductForm({
           existingImages={existingImages}
           keptImages={keptImages}
           onKeptImagesChange={setKeptImages}
+          libraryImages={libraryImages}
+          onLibraryImagesChange={setLibraryImages}
+          libraryItems={libraryItems}
           files={imageFiles}
           onFilesChange={setImageFiles}
           error={fieldErrors.images}

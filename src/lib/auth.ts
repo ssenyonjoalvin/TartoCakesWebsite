@@ -14,6 +14,7 @@ export type AdminSession = {
   email: string;
   name: string;
   role: AdminRole;
+  avatarUrl: string | null;
 };
 
 function getSecret() {
@@ -65,6 +66,7 @@ export async function verifyAdminCredentials(email: string, password: string) {
     email: user.email,
     name: user.name,
     role: user.role,
+    avatarUrl: user.avatarUrl,
   } satisfies AdminSession;
 }
 
@@ -109,6 +111,7 @@ export async function getAdminSession(): Promise<AdminSession | null> {
     email: user.email,
     name: user.name,
     role: user.role,
+    avatarUrl: user.avatarUrl,
   };
 }
 

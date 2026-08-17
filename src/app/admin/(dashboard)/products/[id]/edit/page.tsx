@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { listMediaItems } from "@/lib/media";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import ProductForm from "@/components/admin/ProductForm";
 import type { ProductRow } from "@/components/admin/product-types";
@@ -20,7 +21,7 @@ function asStringArray(value: unknown): string[] {
 export default async function EditProductPage({ params }: Props) {
   const { id } = await params;
 
-  const [cake, occasions, flavors, sizes] = await Promise.all([
+  const [cake, occasions, flavors, sizes, libraryItems] = await Promise.all([
     prisma.cake.findUnique({
       where: { id },
       include: { occasion: true, flavor: true },
@@ -37,6 +38,7 @@ export default async function EditProductPage({ params }: Props) {
       where: { active: true },
       orderBy: { name: "asc" },
     }),
+    listMediaItems(),
   ]);
 
   if (!cake) notFound();
@@ -84,6 +86,7 @@ export default async function EditProductPage({ params }: Props) {
         occasions={occasions.map((item) => ({ id: item.id, name: item.name }))}
         flavors={flavors.map((item) => ({ id: item.id, name: item.name }))}
         sizes={sizes.map((item) => ({ id: item.id, name: item.name }))}
+        libraryItems={libraryItems}
       />
     </div>
   );

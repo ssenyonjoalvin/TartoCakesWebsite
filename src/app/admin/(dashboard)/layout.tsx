@@ -11,7 +11,12 @@ export default async function AdminDashboardLayout({
   if (!session) redirect("/admin/login");
 
   return (
-    <AdminShell name={session.name} email={session.email} role={session.role}>
+    <AdminShell
+      name={session.name}
+      email={session.email}
+      role={session.role}
+      avatarUrl={session.avatarUrl}
+    >
       {children}
     </AdminShell>
   );

@@ -4,16 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAdmin } from "@/app/admin/actions";
 import AdminNav from "@/components/admin/AdminNav";
+import ProfileAvatar from "@/components/admin/ProfileAvatar";
 import type { AdminRole } from "@/generated/prisma/client";
 
 type Props = {
   name: string;
   email: string;
   role: AdminRole;
+  avatarUrl: string | null;
   children: React.ReactNode;
 };
 
 function searchPlaceholder(pathname: string) {
+  if (pathname.startsWith("/admin/profile")) return "Search profile...";
   if (pathname.startsWith("/admin/settings")) return "Search settings...";
   if (pathname.startsWith("/admin/customers")) return "Search customers...";
   if (pathname.startsWith("/admin/users")) return "Search users...";
@@ -24,16 +27,13 @@ function searchPlaceholder(pathname: string) {
   return "Search...";
 }
 
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
-export default function AdminShell({ name, email, role, children }: Props) {
+export default function AdminShell({
+  name,
+  email,
+  role,
+  avatarUrl,
+  children,
+}: Props) {
   const pathname = usePathname();
 
   return (
@@ -49,11 +49,9 @@ export default function AdminShell({ name, email, role, children }: Props) {
         </div>
         <AdminNav role={role} />
         <form action={logoutAdmin} className="mt-auto border-t border-[#EAEAEA] px-4 py-4">
-          <p className="truncate text-sm font-semibold text-tarto-ink">{name}</p>
-          <p className="truncate text-xs text-[#888]">{email}</p>
           <button
             type="submit"
-            className="mt-2 text-sm font-semibold text-tarto-red hover:underline"
+            className="text-sm font-semibold text-tarto-red hover:underline"
           >
             Sign out
           </button>
@@ -99,12 +97,13 @@ export default function AdminShell({ name, email, role, children }: Props) {
                   <circle cx="12" cy="17" r="0.8" fill="currentColor" stroke="none" />
                 </svg>
               </button>
-              <div
-                className="ml-1 flex h-9 w-9 items-center justify-center rounded-full bg-tarto-red text-xs font-bold text-white"
-                title={email}
+              <Link
+                href="/admin/profile"
+                className="ml-1 block transition hover:opacity-90"
+                title={`${name} — View profile`}
               >
-                {initials(name) || "TC"}
-              </div>
+                <ProfileAvatar name={name} avatarUrl={avatarUrl} size="sm" />
+              </Link>
             </div>
           </div>
 

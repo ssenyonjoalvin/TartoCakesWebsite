@@ -2,6 +2,8 @@
 
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import TablePagination from "@/components/admin/TablePagination";
+import { useTablePagination } from "@/components/admin/useTablePagination";
 import {
   createCatalogItem,
   updateCatalogItem,
@@ -211,6 +213,8 @@ export default function CatalogManager({
     initialState
   );
 
+  const pagination = useTablePagination(items);
+
   return (
     <div>
       <AdminPageHeader
@@ -332,7 +336,7 @@ export default function CatalogManager({
                   </td>
                 </tr>
               ) : (
-                items.map((item) => (
+                pagination.items.map((item) => (
                   <tr key={item.id} className="border-b border-[#F5F5F5] last:border-0">
                     <td className="px-5 py-4 font-semibold text-[#2B2B2B]">
                       {item.name}
@@ -437,6 +441,16 @@ export default function CatalogManager({
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          total={pagination.total}
+          from={pagination.from}
+          to={pagination.to}
+          onPageChange={pagination.setPage}
+          label={title.toLowerCase()}
+        />
       </div>
     </div>
   );

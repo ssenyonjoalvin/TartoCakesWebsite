@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { listMediaItems } from "@/lib/media";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import BlogPostForm from "@/components/admin/BlogPostForm";
 
 export const metadata: Metadata = { title: "Create Blog Post" };
 
 export default async function NewBlogPostPage() {
-  const occasions = await prisma.occasion.findMany({
-    where: { active: true },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
+  const [occasions, libraryItems] = await Promise.all([
+    prisma.occasion.findMany({
+      where: { active: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    listMediaItems(),
+  ]);
 
   return (
     <div>
@@ -27,7 +31,7 @@ export default async function NewBlogPostPage() {
           </Link>
         }
       />
-      <BlogPostForm mode="create" occasions={occasions} />
+      <BlogPostForm mode="create" occasions={occasions} libraryItems={libraryItems} />
     </div>
   );
 }

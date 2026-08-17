@@ -2,6 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import {
+  filesFromFormData,
+  MAX_QUOTE_IMAGES,
+  saveQuoteImages,
+} from "@/lib/quote-images";
 
 export type QuoteFormState = {
   error?: string;
@@ -9,15 +14,6 @@ export type QuoteFormState = {
 };
 
 const OTHER_OCCASION = "__other__";
-
-function parsePresetOptions(message: string) {
-  const sizeMatch = message.match(/Size:\s*([^·\n]+)/i);
-  const flavorMatch = message.match(/Flavou?r:\s*([^·\n]+)/i);
-  return {
-    size: sizeMatch?.[1]?.trim() || null,
-    flavor: flavorMatch?.[1]?.trim() || null,
-  };
-}
 
 export async function submitQuoteRequest(
   _prev: QuoteFormState,
@@ -30,8 +26,10 @@ export async function submitQuoteRequest(
   const occasionOther = String(formData.get("occasionOther") ?? "").trim();
   const cakeType = String(formData.get("cakeType") ?? "").trim();
   const message = String(formData.get("message") ?? "").trim();
-  const sizePreset = String(formData.get("size") ?? "").trim();
-  const flavorPreset = String(formData.get("flavor") ?? "").trim();
+  const size = String(formData.get("size") ?? "").trim() || null;
+  const flavor = String(formData.get("flavor") ?? "").trim() || null;
+  const eventDateRaw = String(formData.get("eventDate") ?? "").trim();
+  const referenceFiles = filesFromFormData(formData, "referenceImages");
 
   if (!name || name.length < 2) {
     return { error: "Please enter your name." };
@@ -54,15 +52,48 @@ export async function submitQuoteRequest(
     return { error: "Occasion description is too long." };
   }
 
-  if (!message || message.length < 5) {
-    return {
-      error: "Please tell us a bit more about your cake request.",
-    };
+  if (!size) {
+    return { error: "Please select a size." };
+  }
+  if (!flavor) {
+    return { error: "Please select a flavour." };
+  }
+  if (message.length > 120) {
+    return { error: "Cake wording must be 120 characters or fewer." };
   }
 
-  const fromMessage = parsePresetOptions(message);
-  const size = sizePreset || fromMessage.size;
-  const flavor = flavorPreset || fromMessage.flavor;
+  if (!eventDateRaw) {
+    return { error: "Please choose when you need the cake." };
+  }
+
+  const eventDate = new Date(`${eventDateRaw}T12:00:00`);
+  if (Number.isNaN(eventDate.getTime())) {
+    return { error: "Please enter a valid date." };
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const eventDay = new Date(eventDate);
+  eventDay.setHours(0, 0, 0, 0);
+  if (eventDay < today) {
+    return { error: "The ready date cannot be in the past." };
+  }
+
+  if (referenceFiles.length > MAX_QUOTE_IMAGES) {
+    return { error: `You can attach up to ${MAX_QUOTE_IMAGES} photos.` };
+  }
+
+  let referenceImages: string[] = [];
+  try {
+    referenceImages = await saveQuoteImages(referenceFiles);
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "We could not upload your cake photos. Please try again.",
+    };
+  }
 
   try {
     let occasionId: string | null = null;
@@ -124,6 +155,8 @@ export async function submitQuoteRequest(
         message,
         size,
         flavor,
+        eventDate,
+        referenceImages,
         status: "NEW",
       },
     });
@@ -132,7 +165,8 @@ export async function submitQuoteRequest(
     revalidatePath("/admin/customers");
 
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error("Quote request failed:", error);
     return {
       error:
         "We could not send your request right now. Please try again or call us.",

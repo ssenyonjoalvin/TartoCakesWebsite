@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import TablePagination from "@/components/admin/TablePagination";
 import {
   deleteBlogPost,
   toggleBlogStatus,
@@ -192,50 +193,15 @@ export default function BlogManager({ posts, page, pageSize, total }: Props) {
           </table>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#F0F0F0] px-5 py-3.5 text-sm text-[#777]">
-          <p>
-            Showing {from} to {to} of {total} posts
-          </p>
-          <div className="flex items-center gap-1">
-            <Link
-              href={`/admin/blog?page=${Math.max(1, page - 1)}`}
-              aria-disabled={page <= 1}
-              className={`rounded-lg px-2.5 py-1.5 ${
-                page <= 1
-                  ? "pointer-events-none text-[#CCC]"
-                  : "text-[#555] hover:bg-[#F5F5F5]"
-              }`}
-            >
-              ‹
-            </Link>
-            {Array.from({ length: totalPages }, (_, index) => index + 1)
-              .slice(0, 5)
-              .map((pageNumber) => (
-                <Link
-                  key={pageNumber}
-                  href={`/admin/blog?page=${pageNumber}`}
-                  className={`min-w-8 rounded-lg px-2.5 py-1.5 text-center text-sm font-semibold ${
-                    pageNumber === page
-                      ? "border border-tarto-red text-tarto-red"
-                      : "text-[#555] hover:bg-[#F5F5F5]"
-                  }`}
-                >
-                  {pageNumber}
-                </Link>
-              ))}
-            <Link
-              href={`/admin/blog?page=${Math.min(totalPages, page + 1)}`}
-              aria-disabled={page >= totalPages}
-              className={`rounded-lg px-2.5 py-1.5 ${
-                page >= totalPages
-                  ? "pointer-events-none text-[#CCC]"
-                  : "text-[#555] hover:bg-[#F5F5F5]"
-              }`}
-            >
-              ›
-            </Link>
-          </div>
-        </div>
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          from={from}
+          to={to}
+          hrefForPage={(pageNumber) => `/admin/blog?page=${pageNumber}`}
+          label="posts"
+        />
       </div>
     </div>
   );

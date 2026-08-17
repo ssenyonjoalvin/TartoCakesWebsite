@@ -83,6 +83,7 @@ const nav: NavItem[] = [
 ];
 
 const settingsChildren = [
+  { href: "/admin/profile", label: "My Profile" },
   { href: "/admin/settings/flavors", label: "Cake Flavors" },
   { href: "/admin/settings/sizes", label: "Cake Sizes" },
   { href: "/admin/settings/occasions", label: "Occasions" },
@@ -99,7 +100,8 @@ function navClass(active: boolean) {
 export default function AdminNav({ role }: { role: AdminRole }) {
   const pathname = usePathname();
   const items = nav.filter((item) => !item.adminOnly || role === "ADMIN");
-  const settingsActive = pathname.startsWith("/admin/settings");
+  const settingsActive =
+    pathname.startsWith("/admin/settings") || pathname.startsWith("/admin/profile");
   const [settingsOpen, setSettingsOpen] = useState(settingsActive);
 
   useEffect(() => {

@@ -3,6 +3,8 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import TablePagination from "@/components/admin/TablePagination";
+import { useTablePagination } from "@/components/admin/useTablePagination";
 import {
   deleteProduct,
   toggleProductPublished,
@@ -33,6 +35,8 @@ export default function ProductManager({
   const sizeNameById = useMemo(() => {
     return new Map(sizes.map((size) => [size.id, size.name]));
   }, [sizes]);
+
+  const pagination = useTablePagination(products);
 
   return (
     <div>
@@ -85,7 +89,7 @@ export default function ProductManager({
                   </td>
                 </tr>
               ) : (
-                products.map((product) => (
+                pagination.items.map((product) => (
                   <tr key={product.id} className="border-b border-[#F5F5F5] last:border-0">
                     <td className="px-5 py-4 font-mono text-xs text-[#777]">
                       {shortId(product.id)}
@@ -197,6 +201,16 @@ export default function ProductManager({
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          total={pagination.total}
+          from={pagination.from}
+          to={pagination.to}
+          onPageChange={pagination.setPage}
+          label="products"
+        />
       </div>
     </div>
   );

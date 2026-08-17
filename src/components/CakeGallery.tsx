@@ -2,12 +2,14 @@
 
 import { useMemo, useState } from "react";
 import CakeCard from "@/components/CakeCard";
-import type { Cake } from "@/data/cakes";
 
-export type GalleryCake = Pick<
-  Cake,
-  "id" | "slug" | "name" | "price" | "image" | "description"
-> & {
+export type GalleryCake = {
+  id: string;
+  slug: string;
+  name: string;
+  price: number;
+  image: string;
+  description: string;
   occasionSlug: string | null;
   occasionName: string | null;
 };
@@ -72,20 +74,7 @@ export default function CakeGallery({ cakes, occasions }: Props) {
 
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filtered.map((cake) => (
-          <CakeCard
-            key={cake.id}
-            cake={{
-              id: cake.id,
-              slug: cake.slug,
-              name: cake.name,
-              price: cake.price,
-              image: cake.image,
-              description: cake.description,
-              category: "custom",
-              sizes: [],
-              flavors: [],
-            }}
-          />
+          <CakeCard key={cake.id} cake={cake} />
         ))}
       </div>
 

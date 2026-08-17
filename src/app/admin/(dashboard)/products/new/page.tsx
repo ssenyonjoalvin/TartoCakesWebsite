@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { listMediaItems } from "@/lib/media";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import ProductForm from "@/components/admin/ProductForm";
 
 export const metadata: Metadata = { title: "Add Cake" };
 
 export default async function NewProductPage() {
-  const [occasions, flavors, sizes] = await Promise.all([
+  const [occasions, flavors, sizes, libraryItems] = await Promise.all([
     prisma.occasion.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
@@ -20,6 +21,7 @@ export default async function NewProductPage() {
       where: { active: true },
       orderBy: { name: "asc" },
     }),
+    listMediaItems(),
   ]);
 
   return (
@@ -41,6 +43,7 @@ export default async function NewProductPage() {
         occasions={occasions.map((item) => ({ id: item.id, name: item.name }))}
         flavors={flavors.map((item) => ({ id: item.id, name: item.name }))}
         sizes={sizes.map((item) => ({ id: item.id, name: item.name }))}
+        libraryItems={libraryItems}
       />
     </div>
   );

@@ -1,11 +1,30 @@
+const mapCoordinates = {
+  lat: 0.2784371717134128,
+  lng: 32.56604877461288,
+};
+
+const mapLandmark = "Housing Finance Bank | Najjanankumbi Branch";
+
 export const contactInfo = {
+  businessName: "Tarto Cakes UG",
   phones: ["0700796794", "0700796743"],
   email: "hello@tartocakes.ug",
   address: "Pelican House, Stella — Najjanankumbi",
   city: "Kampala, Uganda",
-  mapEmbedUrl:
-    "https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d3989.7711997370056!2d32.56380467535441!3d0.2784626371698654!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1sNajjanankumbi%20pelican%20house!5e0!3m2!1sen!2sug!4v1786647842103!5m2!1sen!2sug",
+  mapLandmark,
+  mapCoordinates,
+  mapEmbedUrl: `https://maps.google.com/maps?q=${encodeURIComponent(mapLandmark)}@${mapCoordinates.lat},${mapCoordinates.lng}&hl=en&z=17&output=embed`,
+  mapLink: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapLandmark)}`,
 };
+
+export function getCopyableAddress() {
+  return `${contactInfo.mapLandmark}, ${contactInfo.address}, ${contactInfo.city}`;
+}
+
+export function getCopyableCoordinates() {
+  const { lat, lng } = contactInfo.mapCoordinates;
+  return `${lat}, ${lng}`;
+}
 
 export const socialLinks = [
   { name: "Facebook", href: "https://www.facebook.com/TartoCakesUG" },

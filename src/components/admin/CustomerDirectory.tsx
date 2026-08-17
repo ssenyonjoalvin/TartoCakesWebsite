@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import TablePagination from "@/components/admin/TablePagination";
+import { useTablePagination } from "@/components/admin/useTablePagination";
 
 export type CustomerRow = {
   id: string;
@@ -57,6 +59,8 @@ export default function CustomerDirectory({ customers }: Props) {
     }
     return customers.filter((c) => c.status === "active");
   }, [customers, filter]);
+
+  const pagination = useTablePagination(visible, filter);
 
   return (
     <div>
@@ -119,14 +123,14 @@ export default function CustomerDirectory({ customers }: Props) {
               </tr>
             </thead>
             <tbody>
-              {visible.length === 0 ? (
+              {pagination.total === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-5 py-12 text-center text-[#888]">
                     No customers in this filter yet.
                   </td>
                 </tr>
               ) : (
-                visible.map((customer) => (
+                pagination.items.map((customer) => (
                   <tr
                     key={customer.id}
                     className="border-b border-[#F5F5F5] last:border-0"
@@ -190,27 +194,15 @@ export default function CustomerDirectory({ customers }: Props) {
           </table>
         </div>
 
-        <div className="flex items-center justify-between border-t border-[#F0F0F0] px-5 py-3.5 text-sm text-[#777]">
-          <p>
-            Showing 1-{visible.length} of {customers.length} Customers
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              aria-label="Previous page"
-              className="rounded-lg p-2 hover:bg-[#F5F5F5]"
-            >
-              ‹
-            </button>
-            <button
-              type="button"
-              aria-label="Next page"
-              className="rounded-lg p-2 hover:bg-[#F5F5F5]"
-            >
-              ›
-            </button>
-          </div>
-        </div>
+        <TablePagination
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          total={pagination.total}
+          from={pagination.from}
+          to={pagination.to}
+          onPageChange={pagination.setPage}
+          label="customers"
+        />
       </div>
     </div>
   );

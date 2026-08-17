@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import ContactForm from "@/components/ContactForm";
+import LocationMap from "@/components/LocationMap";
 import SocialIcons from "@/components/SocialIcons";
 import { contactInfo, formatPhone, phoneHref } from "@/data/contact";
 import { cakes as staticCakes } from "@/data/cakes";
@@ -39,11 +40,40 @@ async function getOccasionOptions() {
   }
 }
 
+async function getSizeOptions() {
+  try {
+    const rows = await prisma.cakeSize.findMany({
+      where: { active: true },
+      orderBy: { name: "asc" },
+      select: { name: true },
+    });
+    return rows.map((row) => row.name);
+  } catch {
+    return [];
+  }
+}
+
+async function getFlavorOptions() {
+  try {
+    const rows = await prisma.cakeFlavor.findMany({
+      where: { active: true },
+      orderBy: { name: "asc" },
+      select: { name: true },
+    });
+    return rows.map((row) => row.name);
+  } catch {
+    return [];
+  }
+}
+
 export default async function ContactPage() {
-  const [cakeOptions, occasionOptions] = await Promise.all([
-    getCakeOptions(),
-    getOccasionOptions(),
-  ]);
+  const [cakeOptions, occasionOptions, sizeOptions, flavorOptions] =
+    await Promise.all([
+      getCakeOptions(),
+      getOccasionOptions(),
+      getSizeOptions(),
+      getFlavorOptions(),
+    ]);
 
   return (
     <>
@@ -109,6 +139,12 @@ export default async function ContactPage() {
                     </span>
                     <div>
                       <p className="font-semibold text-tarto-ink">Address</p>
+                      <p className="font-semibold text-tarto-ink">
+                        {contactInfo.businessName}
+                      </p>
+                      <p className="text-tarto-ink/70">
+                        At {contactInfo.mapLandmark}
+                      </p>
                       <p>{contactInfo.address}</p>
                       <p>{contactInfo.city}</p>
                     </div>
@@ -121,16 +157,7 @@ export default async function ContactPage() {
                 </div>
               </div>
 
-              <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
-                <iframe
-                  title="Tarto Cakes UG location"
-                  src={contactInfo.mapEmbedUrl}
-                  className="aspect-[4/3] w-full border-0"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  allowFullScreen
-                />
-              </div>
+              <LocationMap />
             </div>
 
             <div className="rounded-2xl bg-white p-6 shadow-sm sm:p-8">
@@ -146,7 +173,12 @@ export default async function ContactPage() {
                   <p className="mt-6 text-sm text-tarto-ink/60">Loading form...</p>
                 }
               >
-                <ContactForm cakes={cakeOptions} occasions={occasionOptions} />
+                <ContactForm
+                  cakes={cakeOptions}
+                  occasions={occasionOptions}
+                  sizes={sizeOptions}
+                  flavors={flavorOptions}
+                />
               </Suspense>
             </div>
           </div>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { listMediaItems } from "@/lib/media";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import BlogPostForm, {
   type BlogFormPost,
@@ -36,13 +37,14 @@ function asSections(value: unknown): BlogSectionInput[] {
 export default async function EditBlogPostPage({ params }: Props) {
   const { id } = await params;
 
-  const [post, occasions] = await Promise.all([
+  const [post, occasions, libraryItems] = await Promise.all([
     prisma.blogPost.findUnique({ where: { id } }),
     prisma.occasion.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
+    listMediaItems(),
   ]);
 
   if (!post) notFound();
@@ -75,7 +77,7 @@ export default async function EditBlogPostPage({ params }: Props) {
           </Link>
         }
       />
-      <BlogPostForm mode="edit" post={formPost} occasions={occasions} />
+      <BlogPostForm mode="edit" post={formPost} occasions={occasions} libraryItems={libraryItems} />
     </div>
   );
 }

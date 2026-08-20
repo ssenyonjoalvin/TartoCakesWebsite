@@ -131,7 +131,7 @@ export default function BlogPage() {
                 </li>
                 <li className="flex justify-between">
                   <span>Tips</span>
-                  <span>1</span>
+                  <span>2</span>
                 </li>
               </ul>
             </div>

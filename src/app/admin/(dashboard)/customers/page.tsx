@@ -16,6 +16,7 @@ const demoCustomers: CustomerRow[] = [
     lastInquiry: "Oct 24, 2024",
     status: "quote",
     avatarTone: "bg-[#C45C26]",
+    inquiries: [],
   },
   {
     id: "demo-2",
@@ -26,6 +27,7 @@ const demoCustomers: CustomerRow[] = [
     lastInquiry: "Oct 22, 2024",
     status: "newsletter",
     avatarTone: "bg-[#5B6B8C]",
+    inquiries: [],
   },
   {
     id: "demo-3",
@@ -36,6 +38,7 @@ const demoCustomers: CustomerRow[] = [
     lastInquiry: "Oct 21, 2024",
     status: "active",
     avatarTone: "bg-tarto-red",
+    inquiries: [],
   },
 ];
 
@@ -45,9 +48,18 @@ function mapStatus(
   orderStatus: string | undefined
 ): CustomerRow["status"] {
   if (!orderStatus) return "newsletter";
-  if (orderStatus === "CONFIRMED" || orderStatus === "QUOTED") return "active";
+  if (orderStatus === "CONFIRMED" || orderStatus === "QUOTED" || orderStatus === "COMPLETED") {
+    return "active";
+  }
   if (orderStatus === "NEW" || orderStatus === "CONTACTED") return "quote";
   return "newsletter";
+}
+
+function mapInquiryStatus(status: string) {
+  if (status === "COMPLETED") return "Fulfilled";
+  if (status === "CANCELLED") return "Cancelled";
+  if (status === "NEW") return "New";
+  return "In progress";
 }
 
 export default async function AdminCustomersPage() {
@@ -59,7 +71,8 @@ export default async function AdminCustomersPage() {
       include: {
         orders: {
           orderBy: { createdAt: "desc" },
-          take: 1,
+          take: 20,
+          include: { occasion: { select: { name: true } } },
         },
       },
       take: 50,
@@ -80,6 +93,18 @@ export default async function AdminCustomersPage() {
           ),
           status: mapStatus(latest?.status),
           avatarTone: tones[index % tones.length],
+          inquiries: row.orders.map((order) => ({
+            id: order.id,
+            code: `#INQ-${order.id.slice(-4).toUpperCase()}`,
+            dateLabel: order.createdAt.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }),
+            occasion: order.occasion?.name ?? order.occasionOther ?? "Custom",
+            cakeName: order.cakeName,
+            statusLabel: mapInquiryStatus(order.status),
+          })),
         };
       });
     }

@@ -4,8 +4,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   ADMIN_SESSION_COOKIE,
-  createAdminSessionToken,
-  sessionMaxAge,
+  adminSessionCookieOptions,
+  createAdminSession,
+  destroyCurrentAdminSession,
   verifyAdminCredentials,
 } from "@/lib/auth";
 
@@ -26,21 +27,13 @@ export async function loginAdmin(
     return { error: "Invalid email or password." };
   }
 
-  const token = createAdminSessionToken(user.id, remember);
+  const { token, maxAge } = await createAdminSession(user.id, remember);
   const store = await cookies();
-  store.set(ADMIN_SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: sessionMaxAge(remember),
-  });
+  store.set(ADMIN_SESSION_COOKIE, token, adminSessionCookieOptions(maxAge));
 
   redirect("/admin");
 }
 
 export async function logoutAdmin() {
-  const store = await cookies();
-  store.delete(ADMIN_SESSION_COOKIE);
-  redirect("/admin/login");
+  await destroyCurrentAdminSession();
 }

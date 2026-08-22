@@ -21,6 +21,13 @@ export const metadata: Metadata = {
   },
   description:
     "Custom cakes for birthdays, weddings, and celebrations across Uganda. Fresh ingredients, handmade with love.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png" }],
+  },
 };
 
 export default function RootLayout({

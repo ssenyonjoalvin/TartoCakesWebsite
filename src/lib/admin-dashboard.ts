@@ -48,7 +48,6 @@ export type DashboardScheduleItem = {
 export type DashboardSalesBucket = {
   label: string;
   revenue: number;
-  cost: number;
 };
 
 export type DashboardCustomerType = {
@@ -258,7 +257,7 @@ function buildSalesBuckets(
       const hour = start.getHours();
       const label =
         hour === 0 ? "12am" : hour < 12 ? `${hour}am` : hour === 12 ? "12pm" : `${hour - 12}pm`;
-      return { label, revenue, cost: Math.round(revenue * 0.38) };
+      return { label, revenue };
     });
   }
 
@@ -270,7 +269,6 @@ function buildSalesBuckets(
       return {
         label: start.toLocaleDateString("en-US", { weekday: "short" }),
         revenue,
-        cost: Math.round(revenue * 0.38),
       };
     });
   }
@@ -288,7 +286,6 @@ function buildSalesBuckets(
       buckets.push({
         label: start.toLocaleDateString("en-US", { day: "numeric", month: "short" }),
         revenue,
-        cost: Math.round(revenue * 0.38),
       });
       cursor = bucketEnd;
     }
@@ -304,7 +301,6 @@ function buildSalesBuckets(
     return {
       label: start.toLocaleDateString("en-US", { month: "short" }),
       revenue,
-      cost: Math.round(revenue * 0.38),
     };
   }).slice(0, now.getMonth() + 1);
 }

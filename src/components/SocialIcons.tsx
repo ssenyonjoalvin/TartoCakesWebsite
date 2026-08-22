@@ -40,8 +40,8 @@ export default function SocialIcons({ variant = "light" }: Props) {
           key={social.name}
           href={social.href}
           aria-label={social.name}
-          target={social.href !== "#" ? "_blank" : undefined}
-          rel={social.href !== "#" ? "noopener noreferrer" : undefined}
+          target="_blank"
+          rel="noopener noreferrer"
           className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${styles}`}
         >
           {icons[social.name]}

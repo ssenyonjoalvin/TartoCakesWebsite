@@ -1,12 +1,17 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import CopyBlogPromptButton from "@/components/admin/CopyBlogPromptButton";
 import TablePagination from "@/components/admin/TablePagination";
+import { useTablePagination } from "@/components/admin/useTablePagination";
 import {
   deleteBlogPost,
   toggleBlogStatus,
 } from "@/app/admin/(dashboard)/blog/actions";
+import ConfirmDeleteForm from "@/components/admin/ConfirmDeleteForm";
+import { matchesSearch, useAdminSearch } from "@/components/admin/AdminSearch";
 
 export type BlogRow = {
   id: string;
@@ -22,9 +27,6 @@ export type BlogRow = {
 
 type Props = {
   posts: BlogRow[];
-  page: number;
-  pageSize: number;
-  total: number;
 };
 
 function PlaceholderThumb() {
@@ -39,10 +41,23 @@ function PlaceholderThumb() {
   );
 }
 
-export default function BlogManager({ posts, page, pageSize, total }: Props) {
-  const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
-  const to = Math.min(page * pageSize, total);
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+export default function BlogManager({ posts }: Props) {
+  const { query } = useAdminSearch();
+  const visible = useMemo(
+    () =>
+      posts.filter((post) =>
+        matchesSearch(
+          query,
+          post.title,
+          post.slug,
+          post.category,
+          post.authorName,
+          post.status
+        )
+      ),
+    [posts, query]
+  );
+  const pagination = useTablePagination(visible, query);
 
   return (
     <div>
@@ -50,12 +65,15 @@ export default function BlogManager({ posts, page, pageSize, total }: Props) {
         title="Blog Management"
         description="Manage your bakery's stories, recipes, and news."
         actions={
-          <Link
-            href="/admin/blog/new"
-            className="rounded-xl bg-tarto-red px-4 py-2.5 text-sm font-bold text-white hover:bg-tarto-red/90"
-          >
-            + Create New Post
-          </Link>
+          <>
+            <CopyBlogPromptButton />
+            <Link
+              href="/admin/blog/new"
+              className="rounded-xl bg-tarto-red px-4 py-2.5 text-sm font-bold text-white hover:bg-tarto-red/90"
+            >
+              + Create New Post
+            </Link>
+          </>
         }
       />
 
@@ -72,9 +90,13 @@ export default function BlogManager({ posts, page, pageSize, total }: Props) {
               </tr>
             </thead>
             <tbody>
-              {posts.length === 0 ? (
+              {pagination.total === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-5 py-12 text-center text-[#888]">
+                    {query.trim() ? (
+                      "No posts match this search."
+                    ) : (
+                      <>
                     No blog posts yet.{" "}
                     <Link
                       href="/admin/blog/new"
@@ -83,10 +105,12 @@ export default function BlogManager({ posts, page, pageSize, total }: Props) {
                       Create your first post
                     </Link>
                     .
+                      </>
+                    )}
                   </td>
                 </tr>
               ) : (
-                posts.map((post) => (
+                pagination.items.map((post) => (
                   <tr
                     key={post.id}
                     className="border-b border-[#F5F5F5] last:border-0"
@@ -112,8 +136,8 @@ export default function BlogManager({ posts, page, pageSize, total }: Props) {
                         <span
                           className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
                             post.status === "PUBLISHED"
-                              ? "bg-[#EBEBEB] text-[#555]"
-                              : "bg-[#FBEAEA] text-tarto-red"
+                              ? "bg-[#E8F5EC] text-[#2F6B45]"
+                              : "bg-[#EBEBEB] text-[#777]"
                           }`}
                         >
                           {post.status === "PUBLISHED" ? "Published" : "Draft"}
@@ -151,24 +175,36 @@ export default function BlogManager({ posts, page, pageSize, total }: Props) {
                                 ? "Unpublish"
                                 : "Publish"
                             }
-                            className="rounded-lg p-2 text-[#777] transition hover:bg-[#F5F5F5]"
+                            aria-label={
+                              post.status === "PUBLISHED"
+                                ? `Unpublish ${post.title}`
+                                : `Publish ${post.title}`
+                            }
+                            className={`rounded-lg p-2 transition ${
+                              post.status === "PUBLISHED"
+                                ? "text-[#777] hover:bg-[#F5F5F5]"
+                                : "text-[#2F6B45] hover:bg-[#E8F5EC]"
+                            }`}
                           >
                             <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-2" aria-hidden>
                               {post.status === "PUBLISHED" ? (
                                 <>
                                   <path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" />
-                                  <circle cx="12" cy="12" r="2.5" />
+                                  <path d="m4 4 16 16" />
                                 </>
                               ) : (
                                 <>
                                   <path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" />
-                                  <path d="m4 4 16 16" />
+                                  <circle cx="12" cy="12" r="2.5" />
                                 </>
                               )}
                             </svg>
                           </button>
                         </form>
-                        <form action={deleteBlogPost}>
+                        <ConfirmDeleteForm
+                          action={deleteBlogPost}
+                          message={`Delete "${post.title}"? This cannot be undone.`}
+                        >
                           <input type="hidden" name="id" value={post.id} />
                           <button
                             type="submit"
@@ -183,7 +219,7 @@ export default function BlogManager({ posts, page, pageSize, total }: Props) {
                               <path d="M10 11v6M14 11v6" />
                             </svg>
                           </button>
-                        </form>
+                        </ConfirmDeleteForm>
                       </div>
                     </td>
                   </tr>
@@ -194,12 +230,12 @@ export default function BlogManager({ posts, page, pageSize, total }: Props) {
         </div>
 
         <TablePagination
-          page={page}
-          totalPages={totalPages}
-          total={total}
-          from={from}
-          to={to}
-          hrefForPage={(pageNumber) => `/admin/blog?page=${pageNumber}`}
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          total={pagination.total}
+          from={pagination.from}
+          to={pagination.to}
+          onPageChange={pagination.setPage}
           label="posts"
         />
       </div>

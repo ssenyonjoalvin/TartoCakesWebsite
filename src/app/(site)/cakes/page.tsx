@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
-import CakeGallery, {
-  type GalleryCake,
-  type GalleryOccasion,
-} from "@/components/CakeGallery";
-import { cakes as staticCakes, categoryLabels } from "@/data/cakes";
-import { prisma } from "@/lib/prisma";
+import CakeGallery from "@/components/CakeGallery";
+import { getActiveOccasions, getPublishedCakes } from "@/lib/public-cakes";
 
 export const metadata: Metadata = {
   title: "Our Cakes",
@@ -12,83 +8,28 @@ export const metadata: Metadata = {
     "Browse cakes by occasion from Tarto Cakes UG — birthdays, weddings, and more.",
 };
 
-async function getGalleryData(): Promise<{
-  cakes: GalleryCake[];
-  occasions: GalleryOccasion[];
-}> {
-  try {
-    const [dbCakes, dbOccasions] = await Promise.all([
-      prisma.cake.findMany({
-        where: { published: true },
-        include: { occasion: true },
-        orderBy: [{ occasion: { name: "asc" } }, { name: "asc" }],
-      }),
-      prisma.occasion.findMany({
-        where: { active: true },
-        orderBy: { name: "asc" },
-        select: { slug: true, name: true },
-      }),
-    ]);
-
-    if (dbCakes.length > 0) {
-      const cakes: GalleryCake[] = dbCakes.map((cake) => ({
-        id: cake.id,
-        slug: cake.slug,
-        name: cake.name,
-        price: cake.price,
-        image: cake.image,
-        description: cake.description,
-        occasionSlug: cake.occasion?.slug ?? null,
-        occasionName: cake.occasion?.name ?? null,
-      }));
-
-      // Prefer settings occasions; if empty, derive from cakes
-      const occasions =
-        dbOccasions.length > 0
-          ? dbOccasions
-          : Array.from(
-              new Map(
-                cakes
-                  .filter((cake) => cake.occasionSlug && cake.occasionName)
-                  .map((cake) => [
-                    cake.occasionSlug!,
-                    {
-                      slug: cake.occasionSlug!,
-                      name: cake.occasionName!,
-                    },
-                  ])
-              ).values()
-            );
-
-      return { cakes, occasions };
-    }
-  } catch {
-    // fall through
-  }
-
-  const cakes: GalleryCake[] = staticCakes.map((cake) => ({
-    id: cake.id,
-    slug: cake.slug,
-    name: cake.name,
-    price: cake.price,
-    image: cake.image,
-    description: cake.description,
-    occasionSlug: cake.category,
-    occasionName: categoryLabels[cake.category],
-  }));
-
-  const occasions: GalleryOccasion[] = (
-    ["birthday", "wedding", "princess", "custom", "romantic"] as const
-  ).map((slug) => ({
-    slug,
-    name: categoryLabels[slug],
-  }));
-
-  return { cakes, occasions };
-}
-
 export default async function CakesPage() {
-  const { cakes, occasions } = await getGalleryData();
+  const [cakes, dbOccasions] = await Promise.all([
+    getPublishedCakes(),
+    getActiveOccasions(),
+  ]);
+
+  const occasions =
+    dbOccasions.length > 0
+      ? dbOccasions
+      : Array.from(
+          new Map(
+            cakes
+              .filter((cake) => cake.occasionSlug && cake.occasionName)
+              .map((cake) => [
+                cake.occasionSlug!,
+                {
+                  slug: cake.occasionSlug!,
+                  name: cake.occasionName!,
+                },
+              ])
+          ).values()
+        );
 
   return (
     <>
@@ -107,7 +48,27 @@ export default async function CakesPage() {
             </p>
           </div>
           <div className="mt-10">
-            <CakeGallery cakes={cakes} occasions={occasions} />
+            {cakes.length > 0 ? (
+              <CakeGallery
+                cakes={cakes.map((cake) => ({
+                  id: cake.id,
+                  slug: cake.slug,
+                  name: cake.name,
+                  price: cake.price,
+                  image: cake.image,
+                  description: cake.description,
+                  occasionSlug: cake.occasionSlug,
+                  occasionName: cake.occasionName,
+                  reviewSummary: cake.reviewSummary,
+                }))}
+                occasions={occasions}
+              />
+            ) : (
+              <p className="text-center text-tarto-ink/70">
+                No cakes are published yet. Add products in the admin dashboard
+                to show them here.
+              </p>
+            )}
           </div>
         </div>
       </section>

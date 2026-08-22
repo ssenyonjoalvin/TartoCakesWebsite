@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { blogPosts, getFeaturedPost, getRecentPosts } from "@/data/blog";
+import {
+  getBlogCategoryCounts,
+  getFeaturedBlogPost,
+  getPublishedBlogPosts,
+  getRecentBlogPosts,
+} from "@/lib/public-blog";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -9,10 +16,31 @@ export const metadata: Metadata = {
     "Cake ideas, wedding trends, and baking tips from Tarto Cakes UG.",
 };
 
-export default function BlogPage() {
-  const featured = getFeaturedPost();
-  const recent = getRecentPosts(3);
-  const gridPosts = blogPosts.filter((post) => post.id !== featured.id);
+export default async function BlogPage() {
+  const [posts, featured, recent] = await Promise.all([
+    getPublishedBlogPosts(),
+    getFeaturedBlogPost(),
+    getRecentBlogPosts(3),
+  ]);
+
+  if (!featured) {
+    return (
+      <section className="bg-tarto-cream py-14">
+        <div className="site-container text-center">
+          <p className="text-sm font-semibold tracking-[0.18em] text-tarto-orange">
+            STORIES & IDEAS
+          </p>
+          <h1 className="mt-3 text-4xl font-bold text-tarto-ink sm:text-5xl">
+            Our Blog & Stories
+          </h1>
+          <p className="mt-6 text-tarto-ink/70">No stories published yet.</p>
+        </div>
+      </section>
+    );
+  }
+
+  const gridPosts = posts.filter((post) => post.id !== featured.id);
+  const categories = getBlogCategoryCounts(posts);
 
   return (
     <section className="bg-tarto-cream py-14">
@@ -121,18 +149,12 @@ export default function BlogPage() {
             <div className="rounded-[1.25rem] bg-white p-5 shadow-[0_8px_30px_rgba(26,26,26,0.05)]">
               <h3 className="font-bold text-tarto-ink">Categories</h3>
               <ul className="mt-3 space-y-2 text-sm text-tarto-ink/80">
-                <li className="flex justify-between">
-                  <span>Birthday</span>
-                  <span>2</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>Wedding</span>
-                  <span>1</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>Tips</span>
-                  <span>2</span>
-                </li>
+                {categories.map((category) => (
+                  <li key={category.name} className="flex justify-between">
+                    <span>{category.name}</span>
+                    <span>{category.count}</span>
+                  </li>
+                ))}
               </ul>
             </div>
 

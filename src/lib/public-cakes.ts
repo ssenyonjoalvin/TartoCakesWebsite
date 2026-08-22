@@ -1,9 +1,17 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import type { Cake } from "@/data/cakes";
+import {
+  emptyReviewSummary,
+  getReviewSummariesByCakeIds,
+  type ReviewSummary,
+} from "@/lib/reviews";
 
 export type PublicCake = Cake & {
   images: string[];
   occasionName: string | null;
+  occasionSlug: string | null;
+  reviewSummary: ReviewSummary;
 };
 
 function asStringArray(value: unknown): string[] {
@@ -11,19 +19,20 @@ function asStringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string");
 }
 
-export async function getPublishedCakes(): Promise<PublicCake[]> {
-  const [cakes, sizes] = await Promise.all([
-    prisma.cake.findMany({
-      where: { published: true },
-      include: { occasion: true, flavor: true },
-      orderBy: [{ featured: "desc" }, { name: "asc" }],
-    }),
-    prisma.cakeSize.findMany({
-      select: { id: true, name: true },
-    }),
-  ]);
+export const getPublishedCakes = cache(async (): Promise<PublicCake[]> => {
+  const cakes = await prisma.cake.findMany({
+    where: { published: true },
+    include: { occasion: true, flavor: true },
+    orderBy: [{ featured: "desc" }, { name: "asc" }],
+  });
+  const sizes = await prisma.cakeSize.findMany({
+    select: { id: true, name: true },
+  });
 
   const sizeNameById = new Map(sizes.map((size) => [size.id, size.name]));
+  const reviewSummaries = await getReviewSummariesByCakeIds(
+    cakes.map((cake) => cake.id)
+  );
 
   return cakes.map((cake) => {
     const images = asStringArray(cake.images);
@@ -49,9 +58,19 @@ export async function getPublishedCakes(): Promise<PublicCake[]> {
             : [],
       featured: cake.featured,
       occasionName: cake.occasion?.name ?? null,
+      occasionSlug: cake.occasion?.slug ?? null,
+      reviewSummary: reviewSummaries.get(cake.id) ?? emptyReviewSummary(),
     };
   });
-}
+});
+
+export const getActiveOccasions = cache(async () => {
+  return prisma.occasion.findMany({
+    where: { active: true },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    select: { slug: true, name: true },
+  });
+});
 
 export async function getPublishedCakeBySlug(
   slug: string

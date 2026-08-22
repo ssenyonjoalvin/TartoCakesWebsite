@@ -349,11 +349,11 @@ export default function ContactForm({
         <button
           type="button"
           onClick={() => referenceInputRef.current?.click()}
-          className="mt-2.5 inline-flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-tarto-ink/20 bg-tarto-cream px-3 py-3 text-sm font-semibold text-tarto-ink transition hover:border-tarto-red/40 hover:bg-white"
+          className="mt-2.5 inline-flex min-h-36 w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-tarto-ink/20 bg-tarto-cream px-3 py-8 text-sm font-semibold text-tarto-ink transition hover:border-tarto-red/40 hover:bg-white"
         >
           <svg
             viewBox="0 0 24 24"
-            className="h-4 w-4 fill-none stroke-current stroke-2"
+            className="h-6 w-6 fill-none stroke-current stroke-2"
             aria-hidden
           >
             <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -393,6 +393,24 @@ export default function ContactForm({
             {referenceError}
           </p>
         ) : null}
+      </div>
+
+      <div>
+        <label htmlFor="notes" className="text-sm font-semibold text-tarto-ink">
+          Comments for the team{" "}
+          <span className="font-normal text-tarto-ink/50">(optional)</span>
+        </label>
+        <textarea
+          id="notes"
+          name="notes"
+          rows={4}
+          maxLength={1000}
+          placeholder="Allergies, delivery notes, colour preferences, or anything else we should know..."
+          className={fieldClass}
+        />
+        <p className="mt-1 text-xs text-tarto-ink/55">
+          Share extra details, questions, or special requests. Leave blank if none.
+        </p>
       </div>
 
       {state.error ? (

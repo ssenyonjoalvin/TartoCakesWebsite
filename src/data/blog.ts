@@ -7,7 +7,7 @@ export type BlogPost = {
   author: string;
   date: string;
   image: string;
-  gallery: [string, string];
+  gallery: string[];
   sections: { heading: string; body: string }[];
   quote?: string;
   featured?: boolean;

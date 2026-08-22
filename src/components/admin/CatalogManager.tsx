@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useId, useRef, useState } from "react";
+import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import TablePagination from "@/components/admin/TablePagination";
 import { useTablePagination } from "@/components/admin/useTablePagination";
@@ -12,6 +12,8 @@ import {
   type CatalogFormState,
   type CatalogKind,
 } from "@/app/admin/(dashboard)/settings/catalog-actions";
+import ConfirmDeleteForm from "@/components/admin/ConfirmDeleteForm";
+import { matchesSearch, useAdminSearch } from "@/components/admin/AdminSearch";
 
 export type CatalogRow = {
   id: string;
@@ -213,7 +215,15 @@ export default function CatalogManager({
     initialState
   );
 
-  const pagination = useTablePagination(items);
+  const { query } = useAdminSearch();
+  const visible = useMemo(
+    () =>
+      items.filter((item) =>
+        matchesSearch(query, item.name, item.description, item.slug)
+      ),
+    [items, query]
+  );
+  const pagination = useTablePagination(visible, query);
 
   return (
     <div>
@@ -326,13 +336,15 @@ export default function CatalogManager({
               </tr>
             </thead>
             <tbody>
-              {items.length === 0 ? (
+              {visible.length === 0 ? (
                 <tr>
                   <td
                     colSpan={showServings ? 5 : 4}
                     className="px-5 py-12 text-center text-[#888]"
                   >
-                    No {title.toLowerCase()} yet. Add your first {singular}.
+                    {query.trim()
+                      ? `No ${title.toLowerCase()} match this search.`
+                      : `No ${title.toLowerCase()} yet. Add your first ${singular}.`}
                   </td>
                 </tr>
               ) : (
@@ -413,7 +425,10 @@ export default function CatalogManager({
                             </svg>
                           </button>
                         </form>
-                        <form action={deleteAction}>
+                        <ConfirmDeleteForm
+                          action={deleteAction}
+                          message={`Delete ${singular} "${item.name}"? This cannot be undone.`}
+                        >
                           <input type="hidden" name="id" value={item.id} />
                           <button
                             type="submit"
@@ -432,7 +447,7 @@ export default function CatalogManager({
                               <path d="M10 11v6M14 11v6" />
                             </svg>
                           </button>
-                        </form>
+                        </ConfirmDeleteForm>
                       </div>
                     </td>
                   </tr>

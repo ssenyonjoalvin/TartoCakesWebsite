@@ -58,6 +58,14 @@ function parseKeepImages(formData: FormData) {
     .filter(Boolean);
 }
 
+function revalidateCakePages(slug?: string) {
+  revalidatePath("/admin/products");
+  revalidatePath("/cakes");
+  revalidatePath("/");
+  revalidatePath("/contact");
+  if (slug) revalidatePath(`/cakes/${slug}`);
+}
+
 function categoryFromSlug(slug: string | null | undefined): CakeCategory {
   const allowed: CakeCategory[] = [
     "birthday",
@@ -153,10 +161,11 @@ async function resolveImages(formData: FormData, requireAtLeastOne: boolean) {
 
   if (kept.length + library.length + uploadedFiles.length > 12) {
     return {
+      ok: false as const,
       fieldErrors: {
         images: "You can add up to 12 images per product.",
       },
-    } as const;
+    };
   }
 
   let uploaded: string[] = [];
@@ -164,24 +173,26 @@ async function resolveImages(formData: FormData, requireAtLeastOne: boolean) {
     uploaded = await saveProductImages(uploadedFiles);
   } catch (error) {
     return {
+      ok: false as const,
       fieldErrors: {
         images:
           error instanceof Error
             ? error.message
             : "Could not upload images.",
       },
-    } as const;
+    };
   }
 
   const images = [...kept, ...library, ...uploaded];
   if (requireAtLeastOne && images.length === 0) {
     return {
+      ok: false as const,
       fieldErrors: {
         images: "Upload at least one product image.",
       },
-    } as const;
+    };
   }
-  return { images } as const;
+  return { ok: true as const, images };
 }
 
 export async function createProduct(
@@ -193,7 +204,7 @@ export async function createProduct(
   const parsed = validateProductFields(formData);
   const imageResult = await resolveImages(formData, true);
   const fieldErrors: ProductFieldErrors = { ...parsed.fieldErrors };
-  if ("fieldErrors" in imageResult) {
+  if (!imageResult.ok) {
     Object.assign(fieldErrors, imageResult.fieldErrors);
   }
 
@@ -204,7 +215,22 @@ export async function createProduct(
     };
   }
 
-  const images = "images" in imageResult ? imageResult.images : [];
+  if (!imageResult.ok) {
+    return {
+      error: "Please fix the highlighted fields.",
+      fieldErrors: imageResult.fieldErrors,
+    };
+  }
+
+  const images = imageResult.images;
+  const coverImage = images[0];
+  if (!coverImage) {
+    return {
+      error: "Please fix the highlighted fields.",
+      fieldErrors: { images: "Upload at least one product image." },
+    };
+  }
+
   const { name, description, price, occasionId, flavorId, sizeIds, featured, published } =
     parsed;
 
@@ -247,7 +273,7 @@ export async function createProduct(
       description,
       price: Math.round(price),
       category: categoryFromSlug(occasion.slug),
-      image: images[0],
+      image: coverImage,
       images,
       occasionId,
       flavorId,
@@ -258,7 +284,7 @@ export async function createProduct(
     },
   });
 
-  revalidatePath("/admin/products");
+  revalidateCakePages(slug);
   redirect("/admin/products");
 }
 
@@ -274,7 +300,7 @@ export async function updateProduct(
   const parsed = validateProductFields(formData);
   const imageResult = await resolveImages(formData, true);
   const fieldErrors: ProductFieldErrors = { ...parsed.fieldErrors };
-  if ("fieldErrors" in imageResult) {
+  if (!imageResult.ok) {
     Object.assign(fieldErrors, imageResult.fieldErrors);
   }
 
@@ -285,7 +311,22 @@ export async function updateProduct(
     };
   }
 
-  const images = "images" in imageResult ? imageResult.images : [];
+  if (!imageResult.ok) {
+    return {
+      error: "Please fix the highlighted fields.",
+      fieldErrors: imageResult.fieldErrors,
+    };
+  }
+
+  const images = imageResult.images;
+  const coverImage = images[0];
+  if (!coverImage) {
+    return {
+      error: "Please fix the highlighted fields.",
+      fieldErrors: { images: "Upload at least one product image." },
+    };
+  }
+
   const { name, description, price, occasionId, flavorId, sizeIds, featured, published } =
     parsed;
 
@@ -329,7 +370,7 @@ export async function updateProduct(
       description,
       price: Math.round(price),
       category: categoryFromSlug(occasion.slug),
-      image: images[0],
+      image: coverImage,
       images,
       occasionId,
       flavorId,
@@ -340,7 +381,7 @@ export async function updateProduct(
     },
   });
 
-  revalidatePath("/admin/products");
+  revalidateCakePages(slug);
   redirect("/admin/products");
 }
 
@@ -348,8 +389,13 @@ export async function deleteProduct(formData: FormData) {
   await requireSession();
   const id = String(formData.get("id") ?? "");
   if (!id) return;
+  const existing = await prisma.cake.findUnique({
+    where: { id },
+    select: { slug: true },
+  });
+  if (!existing) return;
   await prisma.cake.delete({ where: { id } });
-  revalidatePath("/admin/products");
+  revalidateCakePages(existing.slug);
 }
 
 export async function toggleProductPublished(formData: FormData) {
@@ -357,9 +403,10 @@ export async function toggleProductPublished(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const published = formData.get("published") === "true";
   if (!id) return;
-  await prisma.cake.update({
+  const cake = await prisma.cake.update({
     where: { id },
     data: { published: !published },
+    select: { slug: true },
   });
-  revalidatePath("/admin/products");
+  revalidateCakePages(cake.slug);
 }

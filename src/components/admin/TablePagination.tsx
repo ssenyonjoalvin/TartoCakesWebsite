@@ -27,7 +27,7 @@ function PageButton({
 }) {
   const className = `min-w-8 rounded-lg px-2.5 py-1.5 text-center text-sm font-semibold ${
     active
-      ? "border border-tarto-red text-tarto-red"
+      ? "bg-tarto-red text-white"
       : "text-[#555] hover:bg-[#F5F5F5]"
   }`;
 

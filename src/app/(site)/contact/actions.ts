@@ -26,6 +26,7 @@ export async function submitQuoteRequest(
   const occasionOther = String(formData.get("occasionOther") ?? "").trim();
   const cakeType = String(formData.get("cakeType") ?? "").trim();
   const message = String(formData.get("message") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
   const size = String(formData.get("size") ?? "").trim() || null;
   const flavor = String(formData.get("flavor") ?? "").trim() || null;
   const eventDateRaw = String(formData.get("eventDate") ?? "").trim();
@@ -60,6 +61,9 @@ export async function submitQuoteRequest(
   }
   if (message.length > 120) {
     return { error: "Cake wording must be 120 characters or fewer." };
+  }
+  if (notes.length > 1000) {
+    return { error: "Comments must be 1000 characters or fewer." };
   }
 
   if (!eventDateRaw) {
@@ -153,6 +157,7 @@ export async function submitQuoteRequest(
         email,
         phone,
         message,
+        notes: notes || null,
         size,
         flavor,
         eventDate,
@@ -163,6 +168,7 @@ export async function submitQuoteRequest(
 
     revalidatePath("/admin/orders");
     revalidatePath("/admin/customers");
+    revalidatePath("/admin", "layout");
 
     return { success: true };
   } catch (error) {

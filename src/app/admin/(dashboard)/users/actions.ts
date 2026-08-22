@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getAdminSession } from "@/lib/auth";
+import { destroyUserSessions, getAdminSession } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 import type { AdminRole } from "@/generated/prisma/client";
 
@@ -115,6 +115,10 @@ export async function updateAdminUser(
       ...(password ? { passwordHash: hashPassword(password) } : {}),
     },
   });
+
+  if (!active || (password && id !== access.session.id)) {
+    await destroyUserSessions(id);
+  }
 
   revalidatePath("/admin/users");
   redirect("/admin/users");

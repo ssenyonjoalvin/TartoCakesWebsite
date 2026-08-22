@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum CakeCategory {
+  birthday
+  wedding
+  princess
+  custom
+  romantic
+}
+
+enum OrderStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum AdminRole {
+  ADMIN
+  EDITOR
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  HIDDEN
+}
+
+model Cake {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  price       Int
+  category    CakeCategory @default(custom)
+  image       String       @db.VarChar(500)
+  images      Json
+  description String       @db.Text
+  sizes       Json
+  flavors     Json
+  occasionId  String?
+  occasion    Occasion?    @relation(fields: [occasionId], references: [id], onDelete: SetNull)
+  flavorId    String?
+  flavor      CakeFlavor?  @relation(fields: [flavorId], references: [id], onDelete: SetNull)
+  featured    Boolean      @default(false)
+  published   Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  orders      CakeOrder[]
+  reviews     CakeReview[]
+
+  @@index([category])
+  @@index([featured])
+  @@index([occasionId])
+  @@index([flavorId])
+}
+
+model BlogPost {
+  id          String      @id @default(cuid())
+  title       String
+  slug        String      @unique
+  excerpt     String      @db.Text
+  category    String
+  coverImage  String      @db.VarChar(500)
+  gallery     Json
+  sections    Json
+  quote       String?     @db.Text
+  featured    Boolean     @default(false)
+  authorId    String?
+  authorUser  AdminUser?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  occasionId  String?
+  occasion    Occasion?   @relation(fields: [occasionId], references: [id], onDelete: SetNull)
+  status      BlogStatus  @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([status])
+  @@index([publishedAt])
+  @@index([authorId])
+  @@index([occasionId])
+  @@index([category])
+  @@index([featured])
+}
+
+model Customer {
+  id        String      @id @default(cuid())
+  name      String
+  email     String?     @unique
+  phone     String?
+  notes     String?     @db.Text
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  orders    CakeOrder[]
+}
+
+model CakeReview {
+  id        String       @id @default(cuid())
+  cake      Cake         @relation(fields: [cakeId], references: [id], onDelete: Cascade)
+  cakeId    String
+  name      String
+  email     String
+  rating    Int
+  comment   String       @db.Text
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([cakeId, email])
+  @@index([cakeId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("cake_reviews")
+}
+
+model CakeOrder {
+  id              String      @id @default(cuid())
+  customer        Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerId      String?
+  cake            Cake?       @relation(fields: [cakeId], references: [id], onDelete: SetNull)
+  cakeId          String?
+  cakeName        String?
+  occasion        Occasion?   @relation(fields: [occasionId], references: [id], onDelete: SetNull)
+  occasionId      String?
+  occasionOther   String?     @db.VarChar(120)
+  name            String
+  email           String
+  phone           String
+  message         String      @db.Text
+  notes           String?     @db.Text
+  eventDate       DateTime?
+  size            String?
+  flavor          String?
+  referenceImages Json        @default("[]") @db.Json
+  status          OrderStatus @default(NEW)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([occasionId])
+  @@map("cake_orders")
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  filename  String
+  url       String   @db.VarChar(500)
+  alt       String?
+  mimeType  String?
+  createdAt DateTime @default(now())
+}
+
+model SiteSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+}
+
+model AdminUser {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  passwordHash String
+  avatarUrl    String?
+  role         AdminRole      @default(EDITOR)
+  active       Boolean        @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  blogPosts    BlogPost[]
+  sessions     AdminSession[]
+
+  @@index([role])
+  @@index([active])
+}
+
+model AdminSession {
+  id        String    @id @default(cuid())
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("admin_sessions")
+}
+
+model CakeFlavor {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?  @db.Text
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  cakes       Cake[]
+
+  @@index([active])
+  @@index([sortOrder])
+}
+
+model CakeSize {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?  @db.Text
+  servings    Int?
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active])
+  @@index([sortOrder])
+}
+
+model Occasion {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  slug        String      @unique
+  description String?     @db.Text
+  active      Boolean     @default(true)
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  cakes       Cake[]
+  orders      CakeOrder[]
+  blogPosts   BlogPost[]
+
+  @@index([active])
+  @@index([sortOrder])
+}

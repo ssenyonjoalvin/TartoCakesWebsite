@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import AdminUserForm from "@/components/admin/AdminUserForm";
+import ConfirmDeleteForm from "@/components/admin/ConfirmDeleteForm";
 import { deleteAdminUser } from "@/app/admin/(dashboard)/users/actions";
 import type { AdminRole } from "@/generated/prisma/client";
 
@@ -60,7 +61,10 @@ export default function UserRowActions({ user, canRemove }: Props) {
           </svg>
         </button>
         {canRemove ? (
-          <form action={deleteAdminUser}>
+          <ConfirmDeleteForm
+            action={deleteAdminUser}
+            message={`Remove ${user.name}? This cannot be undone.`}
+          >
             <input type="hidden" name="id" value={user.id} />
             <button
               type="submit"
@@ -79,7 +83,7 @@ export default function UserRowActions({ user, canRemove }: Props) {
                 <path d="M10 11v6M14 11v6" />
               </svg>
             </button>
-          </form>
+          </ConfirmDeleteForm>
         ) : null}
       </div>
 

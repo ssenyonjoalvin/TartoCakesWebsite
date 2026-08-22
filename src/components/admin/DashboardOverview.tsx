@@ -35,7 +35,8 @@ function DonutChart({
 }: {
   segments: DashboardData["customerTypes"];
 }) {
-  const total = segments.reduce((sum, item) => sum + item.count, 0) || 1;
+  const total = segments.reduce((sum, item) => sum + item.count, 0);
+  const ringTotal = total || 1;
   let offset = 0;
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
@@ -52,30 +53,34 @@ function DonutChart({
             stroke="#F0F0F0"
             strokeWidth="18"
           />
-          {segments.map((segment) => {
-            const length = (segment.count / total) * circumference;
-            const dasharray = `${length} ${circumference - length}`;
-            const dashoffset = -offset;
-            offset += length;
-            return (
-              <circle
-                key={segment.label}
-                cx="70"
-                cy="70"
-                r={radius}
-                fill="none"
-                stroke={segment.color}
-                strokeWidth="18"
-                strokeDasharray={dasharray}
-                strokeDashoffset={dashoffset}
-                strokeLinecap="butt"
-              />
-            );
-          })}
+          {total > 0
+            ? segments
+                .filter((segment) => segment.count > 0)
+                .map((segment) => {
+                  const length = (segment.count / ringTotal) * circumference;
+                  const dasharray = `${length} ${circumference - length}`;
+                  const dashoffset = -offset;
+                  offset += length;
+                  return (
+                    <circle
+                      key={segment.label}
+                      cx="70"
+                      cy="70"
+                      r={radius}
+                      fill="none"
+                      stroke={segment.color}
+                      strokeWidth="18"
+                      strokeDasharray={dasharray}
+                      strokeDashoffset={dashoffset}
+                      strokeLinecap="butt"
+                    />
+                  );
+                })
+            : null}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <p className="text-2xl font-bold text-[#2B2B2B]">{total}</p>
-          <p className="text-xs text-[#888]">Orders</p>
+          <p className="text-xs text-[#888]">{total === 1 ? "Order" : "Orders"}</p>
         </div>
       </div>
       <div className="mt-5 w-full space-y-2">
@@ -99,10 +104,7 @@ function DonutChart({
 }
 
 function SalesChart({ buckets }: { buckets: DashboardData["salesBuckets"] }) {
-  const maxValue = Math.max(
-    ...buckets.flatMap((bucket) => [bucket.revenue, bucket.cost]),
-    1
-  );
+  const maxValue = Math.max(...buckets.map((bucket) => bucket.revenue), 1);
   const columnClass =
     buckets.length <= 5
       ? "grid-cols-5"
@@ -117,32 +119,20 @@ function SalesChart({ buckets }: { buckets: DashboardData["salesBuckets"] }) {
       <div className="mb-4 flex items-center gap-4 text-xs text-[#777]">
         <span className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-sm bg-tarto-yellow" />
-          Sales revenue
-        </span>
-        <span className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-sm bg-[#D9D9D9]" />
-          Product cost
+          Completed cake sales
         </span>
       </div>
-      <div className={`grid h-56 items-end gap-2 sm:gap-3 ${columnClass}`}>
+      <div className={`grid h-56 items-end gap-2 sm:gap-4 ${columnClass}`}>
         {buckets.map((bucket) => (
           <div key={bucket.label} className="flex h-full flex-col items-center justify-end gap-2">
-            <div className="flex h-full w-full items-end justify-center gap-1">
+            <div className="flex h-full w-full items-end justify-center">
               <div
-                className="w-2.5 rounded-t-sm bg-[#D9D9D9] sm:w-3"
-                style={{
-                  height: `${(bucket.cost / maxValue) * 100}%`,
-                  minHeight: bucket.cost ? 8 : 0,
-                }}
-                title={`Cost ${formatPrice(bucket.cost)}`}
-              />
-              <div
-                className="w-2.5 rounded-t-sm bg-tarto-yellow sm:w-3"
+                className="w-5 rounded-t-md bg-tarto-yellow sm:w-7"
                 style={{
                   height: `${(bucket.revenue / maxValue) * 100}%`,
                   minHeight: bucket.revenue ? 8 : 0,
                 }}
-                title={`Revenue ${formatPrice(bucket.revenue)}`}
+                title={`${bucket.label}: ${formatPrice(bucket.revenue)}`}
               />
             </div>
             <span className="text-[10px] text-[#888] sm:text-xs">{bucket.label}</span>
@@ -280,7 +270,7 @@ export default function DashboardOverview({ userName, data, period }: Props) {
         <div className="rounded-2xl border border-[#EBEBEB] bg-white p-5 shadow-[0_8px_30px_rgba(0,0,0,0.03)] sm:p-6">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-[#2B2B2B]">
-              Sales forecast (cakes & pastries)
+              Cake sales
             </h2>
           </div>
           <div className="mt-5">

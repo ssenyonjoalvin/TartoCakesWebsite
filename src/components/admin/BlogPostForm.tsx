@@ -9,6 +9,7 @@ import {
   type BlogSectionInput,
 } from "@/app/admin/(dashboard)/blog/actions";
 import MediaLibraryPicker from "@/components/admin/MediaLibraryPicker";
+import CopyBlogPromptButton from "@/components/admin/CopyBlogPromptButton";
 import type { MediaItem } from "@/lib/media-types";
 
 const initialState: BlogFormState = {};
@@ -77,7 +78,10 @@ export default function BlogPostForm({
     Boolean(coverPreview);
 
   return (
-    <form action={formAction} className="mt-8 space-y-8">
+    <div className="mt-8 space-y-8">
+      <CopyBlogPromptButton variant="card" />
+
+      <form action={formAction} className="space-y-8">
       {post ? <input type="hidden" name="id" value={post.id} /> : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -130,18 +134,23 @@ export default function BlogPostForm({
         </div>
 
         <div>
-          <label htmlFor="status" className="text-sm font-semibold text-[#333]">
-            Status
-          </label>
-          <select
-            id="status"
-            name="status"
-            defaultValue={post?.status ?? "DRAFT"}
-            className={inputClass}
-          >
-            <option value="DRAFT">Draft</option>
-            <option value="PUBLISHED">Published</option>
-          </select>
+          <p className="text-sm font-semibold text-[#333]">Status</p>
+          <div className="mt-1.5 flex min-h-[42px] flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-[#E0E0E0] bg-[#F7F7F7] px-3 py-2">
+            <span
+              className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                post?.status === "PUBLISHED"
+                  ? "bg-[#E8F5EC] text-[#2F6B45]"
+                  : "bg-[#EBEBEB] text-[#777]"
+              }`}
+            >
+              {post?.status === "PUBLISHED" ? "Published" : "Draft"}
+            </span>
+            <span className="text-xs text-[#888]">
+              {mode === "create"
+                ? "New posts save as draft. Publish from the blog list."
+                : "Use the eye icon on the blog list to publish or unpublish."}
+            </span>
+          </div>
         </div>
 
         <div>
@@ -502,5 +511,6 @@ export default function BlogPostForm({
         </Link>
       </div>
     </form>
+    </div>
   );
 }

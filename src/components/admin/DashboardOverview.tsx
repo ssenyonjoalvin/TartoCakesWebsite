@@ -84,7 +84,9 @@ function DonutChart({
         </div>
       </div>
       <div className="mt-5 w-full space-y-2">
-        {segments.map((segment) => (
+        {segments
+          .filter((segment) => segment.count > 0)
+          .map((segment) => (
           <div key={segment.label} className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
               <span
@@ -279,7 +281,7 @@ export default function DashboardOverview({ userName, data, period }: Props) {
         </div>
 
         <div className="rounded-2xl border border-[#EBEBEB] bg-white p-5 shadow-[0_8px_30px_rgba(0,0,0,0.03)] sm:p-6">
-          <h2 className="text-lg font-bold text-[#2B2B2B]">Customer types</h2>
+          <h2 className="text-lg font-bold text-[#2B2B2B]">Occasions</h2>
           <div className="mt-5">
             <DonutChart segments={data.customerTypes} />
           </div>

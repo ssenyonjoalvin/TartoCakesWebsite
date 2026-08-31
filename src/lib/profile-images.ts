@@ -1,6 +1,4 @@
-import { randomBytes } from "crypto";
-import { mkdir, unlink, writeFile } from "fs/promises";
-import path from "path";
+import { deleteImageByUrl, isCloudinaryUrl, uploadImage } from "@/lib/cloudinary";
 
 const ALLOWED_TYPES = new Set([
   "image/jpeg",
@@ -10,14 +8,6 @@ const ALLOWED_TYPES = new Set([
 ]);
 
 const MAX_BYTES = 2 * 1024 * 1024;
-
-function extensionFor(type: string) {
-  if (type === "image/jpeg") return "jpg";
-  if (type === "image/png") return "png";
-  if (type === "image/webp") return "webp";
-  if (type === "image/gif") return "gif";
-  return "jpg";
-}
 
 export async function saveProfileImage(file: File) {
   if (!(file instanceof File) || file.size === 0) {
@@ -30,22 +20,14 @@ export async function saveProfileImage(file: File) {
     throw new Error("Profile photo must be under 2MB.");
   }
 
-  const uploadDir = path.join(process.cwd(), "public", "images", "avatars");
-  await mkdir(uploadDir, { recursive: true });
-
-  const filename = `${Date.now()}-${randomBytes(4).toString("hex")}.${extensionFor(file.type)}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(uploadDir, filename), buffer);
-
-  return `/images/avatars/${filename}`;
+  const uploaded = await uploadImage(file, "avatars");
+  return uploaded.url;
 }
 
 export async function deleteProfileImage(url: string | null | undefined) {
-  if (!url || !url.startsWith("/images/avatars/")) return;
-
-  const filePath = path.join(process.cwd(), "public", url);
+  if (!url || !isCloudinaryUrl(url)) return;
   try {
-    await unlink(filePath);
+    await deleteImageByUrl(url);
   } catch {
     // ignore missing files
   }

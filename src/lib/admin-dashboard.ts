@@ -48,7 +48,6 @@ export type DashboardScheduleItem = {
 export type DashboardSalesBucket = {
   label: string;
   revenue: number;
-  cost: number;
 };
 
 export type DashboardCustomerType = {
@@ -73,6 +72,17 @@ export type DashboardData = {
   topCakes: DashboardTopCake[];
   scheduleItems: DashboardScheduleItem[];
 };
+
+const occasionColors = [
+  "#D62828",
+  "#F6B21A",
+  "#C45C26",
+  "#6B8F71",
+  "#5B6B8C",
+  "#8B5A8C",
+  "#E07A5F",
+  "#3D5A80",
+];
 
 const avatarTones = [
   "bg-[#C45C26]",
@@ -191,11 +201,8 @@ function occasionTone(label: string, slug = ""): DashboardRecentOrder["occasionT
   return "custom";
 }
 
-function customerSegment(label: string, slug = "") {
-  const value = `${label} ${slug}`.toLowerCase();
-  if (value.includes("wedding")) return "Weddings";
-  if (value.includes("corporate") || value.includes("office")) return "Corporate";
-  return "Individuals";
+function occasionChartLabel(name: string) {
+  return name.replace(/\s+cakes$/i, "").trim() || name;
 }
 
 function statusMeta(status: string) {
@@ -258,7 +265,7 @@ function buildSalesBuckets(
       const hour = start.getHours();
       const label =
         hour === 0 ? "12am" : hour < 12 ? `${hour}am` : hour === 12 ? "12pm" : `${hour - 12}pm`;
-      return { label, revenue, cost: Math.round(revenue * 0.38) };
+      return { label, revenue };
     });
   }
 
@@ -270,7 +277,6 @@ function buildSalesBuckets(
       return {
         label: start.toLocaleDateString("en-US", { weekday: "short" }),
         revenue,
-        cost: Math.round(revenue * 0.38),
       };
     });
   }
@@ -288,7 +294,6 @@ function buildSalesBuckets(
       buckets.push({
         label: start.toLocaleDateString("en-US", { day: "numeric", month: "short" }),
         revenue,
-        cost: Math.round(revenue * 0.38),
       });
       cursor = bucketEnd;
     }
@@ -304,7 +309,6 @@ function buildSalesBuckets(
     return {
       label: start.toLocaleDateString("en-US", { month: "short" }),
       revenue,
-      cost: Math.round(revenue * 0.38),
     };
   }).slice(0, now.getMonth() + 1);
 }
@@ -397,32 +401,29 @@ export async function getDashboardData(
 
   const salesBuckets = buildSalesBuckets(period, allOrders, range, now);
 
-  const segmentCounts = new Map<string, number>();
+  const occasionCounts = new Map<string, number>();
+  let otherCount = 0;
   for (const order of periodOrders) {
-    const label = customerSegment(
-      order.occasionOther?.trim() || order.occasion?.name || "Custom",
-      order.occasion?.slug
-    );
-    segmentCounts.set(label, (segmentCounts.get(label) ?? 0) + 1);
+    const catalogName = order.occasion?.name?.trim();
+    if (catalogName) {
+      const label = occasionChartLabel(catalogName);
+      occasionCounts.set(label, (occasionCounts.get(label) ?? 0) + 1);
+    } else {
+      otherCount += 1;
+    }
   }
 
-  const customerTypes: DashboardCustomerType[] = [
-    {
-      label: "Weddings",
-      count: segmentCounts.get("Weddings") ?? 0,
-      color: "#F6B21A",
-    },
-    {
-      label: "Corporate",
-      count: segmentCounts.get("Corporate") ?? 0,
-      color: "#C45C26",
-    },
-    {
-      label: "Individuals",
-      count: segmentCounts.get("Individuals") ?? 0,
-      color: "#D62828",
-    },
-  ];
+  if (otherCount > 0) {
+    occasionCounts.set("Other", otherCount);
+  }
+
+  const customerTypes: DashboardCustomerType[] = [...occasionCounts.entries()]
+    .filter(([, count]) => count > 0)
+    .map(([label, count], index) => ({
+      label,
+      count,
+      color: occasionColors[index % occasionColors.length],
+    }));
 
   const cakeCounts = new Map<
     string,

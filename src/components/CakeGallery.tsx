@@ -12,6 +12,10 @@ export type GalleryCake = {
   description: string;
   occasionSlug: string | null;
   occasionName: string | null;
+  reviewSummary?: {
+    average: number;
+    count: number;
+  };
 };
 
 export type GalleryOccasion = {

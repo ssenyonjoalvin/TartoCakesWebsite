@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import CakeCard from "@/components/CakeCard";
@@ -10,6 +9,12 @@ import {
   relatedCakes,
 } from "@/lib/public-cakes";
 import CakeImageGallery from "@/components/CakeImageGallery";
+import CakeReviews from "@/components/CakeReviews";
+import StarRating from "@/components/StarRating";
+import {
+  emptyReviewSummary,
+  getApprovedReviewsForCake,
+} from "@/lib/reviews";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -33,6 +38,8 @@ export default async function CakeDetailPage({ params }: Props) {
 
   const related = relatedCakes(cakes, cake, 3);
   const occasionName = cake.occasionName;
+  const reviews = await getApprovedReviewsForCake(cake.id);
+  const summary = cake.reviewSummary ?? emptyReviewSummary();
 
   return (
     <>
@@ -64,7 +71,21 @@ export default async function CakeDetailPage({ params }: Props) {
               {formatPrice(cake.price)}
             </p>
 
-            <div className="mt-2 flex items-center gap-2 text-sm text-tarto-ink/60">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-tarto-ink/60">
+              <a
+                href="#reviews"
+                className="inline-flex flex-wrap items-center gap-2 hover:text-tarto-red"
+              >
+                <StarRating value={summary.average} />
+                {summary.count > 0 ? (
+                  <span>
+                    {summary.average.toFixed(1)} ({summary.count})
+                  </span>
+                ) : (
+                  <span>No reviews yet</span>
+                )}
+              </a>
+              {occasionName ? <span>·</span> : null}
               {occasionName ? <span>{occasionName}</span> : null}
             </div>
 
@@ -74,6 +95,15 @@ export default async function CakeDetailPage({ params }: Props) {
 
             <CakeOrderOptions cake={cake} />
           </div>
+        </div>
+
+        <div className="site-container">
+          <CakeReviews
+            cakeId={cake.id}
+            cakeName={cake.name}
+            reviews={reviews}
+            summary={summary}
+          />
         </div>
 
         {related.length > 0 ? (

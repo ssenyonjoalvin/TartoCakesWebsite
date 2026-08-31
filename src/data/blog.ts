@@ -7,13 +7,45 @@ export type BlogPost = {
   author: string;
   date: string;
   image: string;
-  gallery: [string, string];
+  gallery: string[];
   sections: { heading: string; body: string }[];
   quote?: string;
   featured?: boolean;
 };
 
 export const blogPosts: BlogPost[] = [
+  {
+    id: "5",
+    slug: "how-to-order-a-custom-cake-in-kampala",
+    title: "How to Order a Custom Cake in Kampala Without Last-Minute Stress",
+    excerpt:
+      "A baker’s checklist for dates, servings, flavours, and photos — so your Tarto cake arrives calm, fresh, and on time.",
+    category: "Tips",
+    author: "Sarah Tarto",
+    date: "August 20, 2026",
+    image: "/images/cooking-with-love.jpg",
+    gallery: [
+      "/images/chef-shaping-cake.jpg",
+      "/images/pouring-cream-in-bowl.jpg",
+    ],
+    featured: false,
+    quote:
+      "Give us the date, the guest count, and one clear idea. We will turn that into a cake that tastes as considered as it looks.",
+    sections: [
+      {
+        heading: "Start with the date, not the decoration",
+        body: "In our kitchen at Najjanankumbi, the first question is never “what colour?” It is “when do you need it?” A celebration cake is baked to order, then finished, boxed, and delivered with care. We ask for at least a day’s lead time so the sponge can rest and the frosting can set. If the event is this weekend, tell us that first — we will be honest about what we can still do beautifully, and what needs a simpler design. A calm order always tastes better than a rushed one.",
+      },
+      {
+        heading: "Tell us who you are feeding, and how you want it to feel",
+        body: "Servings matter more than a sketch. A small family lunch needs a different size from a hall of wedding guests. Share the occasion, the age of the person being celebrated, and any flavours they already love — chocolate, red velvet, vanilla, or something brighter like lemon. Photos from Instagram help, but a short note such as “soft pink, pearls, no cartoon toppers” is often clearer. If you have a wording for the cake, keep it short. We write it by hand, and a clean message photographs better on the table.",
+      },
+      {
+        heading: "Lock the details, then let the bakery work",
+        body: "Once size, flavour, and pickup or delivery are agreed, we shop, bake, and decorate for that order only. You do not need to chase every swirl. If you want to taste a flavour first, say so when you request a quote. For Kampala deliveries, leave a reachable phone number and a landmark — Pelican House, Stella is easy to find, and we use the same care when we bring the cake to you. When you are ready, send the date, guest count, and a reference photo through our quote form. We will confirm, bake, and show up on time.",
+      },
+    ],
+  },
   {
     id: "1",
     slug: "top-10-birthday-cake-ideas",

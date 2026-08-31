@@ -7,7 +7,9 @@ import {
   type MediaFormState,
 } from "@/app/admin/(dashboard)/media/actions";
 import TablePagination from "@/components/admin/TablePagination";
+import ConfirmDeleteForm from "@/components/admin/ConfirmDeleteForm";
 import { useTablePagination } from "@/components/admin/useTablePagination";
+import { matchesSearch, useAdminSearch } from "@/components/admin/AdminSearch";
 import {
   MEDIA_FOLDERS,
   formatFileSize,
@@ -57,7 +59,7 @@ function CopyButton({ value }: { value: string }) {
 export default function MediaManager({ items }: Props) {
   const [state, formAction, pending] = useActionState(uploadMedia, initialState);
   const [folder, setFolder] = useState<MediaFolder | "all">("all");
-  const [query, setQuery] = useState("");
+  const { query, setQuery } = useAdminSearch();
   const [dragging, setDragging] = useState(false);
   const [selectedCount, setSelectedCount] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -67,10 +69,7 @@ export default function MediaManager({ items }: Props) {
     return items.filter((item) => {
       if (folder !== "all" && item.folder !== folder) return false;
       if (!term) return true;
-      return (
-        item.filename.toLowerCase().includes(term) ||
-        item.usedBy.some((label) => label.toLowerCase().includes(term))
-      );
+      return matchesSearch(query, item.filename, ...item.usedBy);
     });
   }, [items, folder, query]);
 
@@ -256,24 +255,18 @@ export default function MediaManager({ items }: Props) {
                 <div className="mt-3 flex items-center justify-between gap-2">
                   <CopyButton value={item.url} />
                   {item.canDelete ? (
-                    <form action={deleteMedia}>
+                    <ConfirmDeleteForm
+                      action={deleteMedia}
+                      message={`Delete ${item.filename}? This cannot be undone.`}
+                    >
                       <input type="hidden" name="url" value={item.url} />
                       <button
                         type="submit"
-                        onClick={(event) => {
-                          if (
-                            !window.confirm(
-                              `Delete ${item.filename}? This cannot be undone.`
-                            )
-                          ) {
-                            event.preventDefault();
-                          }
-                        }}
                         className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-tarto-red transition hover:bg-[#FBEAEA]"
                       >
                         Delete
                       </button>
-                    </form>
+                    </ConfirmDeleteForm>
                   ) : (
                     <span className="px-2.5 py-1.5 text-xs text-[#AAA]">
                       {item.folder === "site" ? "Protected" : "In use"}

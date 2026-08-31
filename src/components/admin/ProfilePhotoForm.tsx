@@ -7,6 +7,7 @@ import {
   updateProfilePhoto,
   type PhotoFormState,
 } from "@/app/admin/(dashboard)/profile/actions";
+import { ConfirmDialog } from "@/components/admin/ConfirmDeleteForm";
 
 type Props = {
   name: string;
@@ -32,6 +33,7 @@ export default function ProfilePhotoForm({ name, avatarUrl }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [removeState, setRemoveState] = useState<PhotoFormState>({});
   const [removing, setRemoving] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const displaySrc = preview ?? avatarUrl;
@@ -46,6 +48,7 @@ export default function ProfilePhotoForm({ name, avatarUrl }: Props) {
   }
 
   async function handleRemove() {
+    setConfirmOpen(false);
     setRemoving(true);
     setRemoveState({});
     const result = await removeProfilePhoto();
@@ -106,13 +109,25 @@ export default function ProfilePhotoForm({ name, avatarUrl }: Props) {
       {avatarUrl ? (
         <button
           type="button"
-          onClick={handleRemove}
+          onClick={() => setConfirmOpen(true)}
           disabled={removing || pending}
           className="mt-3 w-full rounded-xl border border-[#E0E0E0] px-5 py-2.5 text-sm font-semibold text-tarto-ink/70 transition hover:border-tarto-red/30 hover:text-tarto-red disabled:opacity-70"
         >
           {removing ? "Removing..." : "Remove photo"}
         </button>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Remove photo"
+        message="Remove this profile photo? This cannot be undone."
+        confirmLabel="Remove"
+        pending={removing}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          void handleRemove();
+        }}
+      />
 
       {feedback ? (
         <p

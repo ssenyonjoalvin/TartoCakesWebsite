@@ -5,6 +5,7 @@ import AddUserDialog from "@/components/admin/AddUserDialog";
 import TablePagination from "@/components/admin/TablePagination";
 import UserRowActions from "@/components/admin/UserRowActions";
 import { useTablePagination } from "@/components/admin/useTablePagination";
+import { matchesSearch, useAdminSearch } from "@/components/admin/AdminSearch";
 
 export type AdminUserRow = {
   id: string;
@@ -22,7 +23,11 @@ type Props = {
 };
 
 export default function AdminUsersTable({ users, currentUserId }: Props) {
-  const pagination = useTablePagination(users);
+  const { query } = useAdminSearch();
+  const visible = users.filter((user) =>
+    matchesSearch(query, user.name, user.email, user.role)
+  );
+  const pagination = useTablePagination(visible, query);
 
   return (
     <div>
@@ -47,7 +52,16 @@ export default function AdminUsersTable({ users, currentUserId }: Props) {
               </tr>
             </thead>
             <tbody>
-              {pagination.items.map((user) => (
+              {pagination.total === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-5 py-12 text-center text-[#888]">
+                    {query.trim()
+                      ? "No users match this search."
+                      : "No users yet."}
+                  </td>
+                </tr>
+              ) : (
+              pagination.items.map((user) => (
                 <tr
                   key={user.id}
                   className="border-b border-[#F5F5F5] last:border-0"
@@ -90,7 +104,8 @@ export default function AdminUsersTable({ users, currentUserId }: Props) {
                     />
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>

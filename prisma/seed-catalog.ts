@@ -1,76 +1,125 @@
 import "dotenv/config";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { cakes, categoryLabels } from "../src/data/cakes";
-import type { CakeCategory } from "../src/data/cakes";
+import { cakes, categoryLabels, type CakeCategory } from "../src/data/cakes";
+import { parseDatabaseUrl } from "../src/lib/db-url";
 
-const url = process.env.DATABASE_URL;
-if (!url) throw new Error("DATABASE_URL is not set");
+const occasionMeta: { slug: CakeCategory; sortOrder: number }[] = [
+  { slug: "birthday", sortOrder: 0 },
+  { slug: "wedding", sortOrder: 1 },
+  { slug: "princess", sortOrder: 2 },
+  { slug: "custom", sortOrder: 3 },
+  { slug: "romantic", sortOrder: 4 },
+];
 
-const prisma = new PrismaClient({
-  adapter: new PrismaMariaDb(url),
-});
-
-function uniqueSorted(values: string[]) {
-  return [...new Set(values.map((v) => v.trim()).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-  );
-}
-
-async function main() {
-  const flavors = uniqueSorted(cakes.flatMap((cake) => cake.flavors));
-  const sizes = uniqueSorted(cakes.flatMap((cake) => cake.sizes));
-  const occasions = (
-    Object.keys(categoryLabels) as Array<CakeCategory | "all">
-  )
-    .filter((key) => key !== "all")
-    .map((key, index) => ({
-      name: categoryLabels[key].replace(/ Cakes$/, ""),
-      slug: key,
-      sortOrder: index,
-      description: `${categoryLabels[key]} for celebrations.`,
-    }));
-
-  for (const [index, name] of flavors.entries()) {
-    await prisma.cakeFlavor.upsert({
-      where: { name },
-      update: {},
-      create: { name, sortOrder: index, active: true },
-    });
-  }
-
-  for (const [index, name] of sizes.entries()) {
-    await prisma.cakeSize.upsert({
-      where: { name },
-      update: {},
-      create: { name, sortOrder: index, active: true },
-    });
-  }
-
-  for (const occasion of occasions) {
+export async function seedCatalog(prisma: PrismaClient) {
+  for (const occasion of occasionMeta) {
     await prisma.occasion.upsert({
       where: { slug: occasion.slug },
-      update: { name: occasion.name },
       create: {
-        name: occasion.name,
         slug: occasion.slug,
-        description: occasion.description,
-        sortOrder: occasion.sortOrder,
+        name: categoryLabels[occasion.slug],
         active: true,
+        sortOrder: occasion.sortOrder,
+      },
+      update: {},
+    });
+  }
+
+  const flavorNames = [
+    ...new Set(cakes.flatMap((cake) => cake.flavors).filter(Boolean)),
+  ];
+  for (const name of flavorNames) {
+    await prisma.cakeFlavor.upsert({
+      where: { name },
+      create: { name, active: true },
+      update: {},
+    });
+  }
+
+  const sizeNames = [
+    ...new Set(cakes.flatMap((cake) => cake.sizes).filter(Boolean)),
+  ];
+  for (const name of sizeNames) {
+    await prisma.cakeSize.upsert({
+      where: { name },
+      create: { name, active: true },
+      update: {},
+    });
+  }
+
+  const [occasions, flavors, sizes, existingCakes] = await Promise.all([
+    prisma.occasion.findMany({ select: { id: true, slug: true } }),
+    prisma.cakeFlavor.findMany({ select: { id: true, name: true } }),
+    prisma.cakeSize.findMany({ select: { id: true, name: true } }),
+    prisma.cake.findMany({ select: { slug: true } }),
+  ]);
+
+  const occasionIdBySlug = new Map(occasions.map((row) => [row.slug, row.id]));
+  const flavorIdByName = new Map(flavors.map((row) => [row.name, row.id]));
+  const sizeIdByName = new Map(sizes.map((row) => [row.name, row.id]));
+  const existingSlugs = new Set(existingCakes.map((row) => row.slug));
+
+  const missing = cakes.filter((cake) => !existingSlugs.has(cake.slug));
+  if (missing.length === 0) {
+    console.log("Catalog cakes already exist in the database.");
+    return;
+  }
+
+  for (const cake of missing) {
+    const flavorId = flavorIdByName.get(cake.flavors[0] ?? "") ?? null;
+    const sizeIds = cake.sizes
+      .map((name) => sizeIdByName.get(name))
+      .filter((id): id is string => Boolean(id));
+
+    await prisma.cake.create({
+      data: {
+        slug: cake.slug,
+        name: cake.name,
+        price: cake.price,
+        category: cake.category,
+        image: cake.image,
+        images: [cake.image],
+        description: cake.description,
+        sizes: sizeIds,
+        flavors: cake.flavors,
+        featured: cake.featured ?? false,
+        published: true,
+        occasionId: occasionIdBySlug.get(cake.category) ?? null,
+        flavorId,
       },
     });
   }
 
-  console.log(
-    `Seeded ${flavors.length} flavors, ${sizes.length} sizes, ${occasions.length} occasions.`
-  );
+  console.log(`Added ${missing.length} catalog cake${missing.length === 1 ? "" : "s"} to the database.`);
 }
 
-main()
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
+function createClient() {
+  return new PrismaClient({
+    adapter: new PrismaMariaDb({
+      ...parseDatabaseUrl(),
+      connectionLimit: 2,
+      allowPublicKeyRetrieval: true,
+    }),
   });
+}
+
+async function runStandalone() {
+  const prisma = createClient();
+  try {
+    await seedCatalog(prisma);
+  } finally {
+    await Promise.race([
+      prisma.$disconnect(),
+      new Promise((resolve) => setTimeout(resolve, 500)),
+    ]);
+  }
+}
+
+const invokedDirectly = process.argv[1]?.includes("seed-catalog");
+if (invokedDirectly) {
+  runStandalone().catch((error) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exit(1);
+  });
+}

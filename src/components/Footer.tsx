@@ -89,7 +89,15 @@ export default function Footer() {
         </div>
         <div className="border-t border-white/15">
           <div className="site-container py-4 text-center text-xs text-white/70">
-            © {new Date().getFullYear()} Tarto Cakes UG. All rights reserved.
+            ©{" "}
+            <Link
+              href="/admin/login"
+              className="cursor-default text-inherit no-underline"
+              aria-label="Staff sign in"
+            >
+              {new Date().getFullYear()}
+            </Link>{" "}
+            Tarto Cakes UG. All rights reserved.
           </div>
         </div>
       </footer>

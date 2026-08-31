@@ -27,12 +27,19 @@ export type MediaItem = {
   canDelete: boolean;
 };
 
+const MANAGED_FOLDERS: Exclude<MediaFolder, "site">[] = [
+  "library",
+  "products",
+  "blog",
+  "avatars",
+  "quotes",
+];
+
 export function folderFromUrl(url: string): MediaFolder {
-  if (url.startsWith("/images/library/")) return "library";
-  if (url.startsWith("/images/products/")) return "products";
-  if (url.startsWith("/images/blog/")) return "blog";
-  if (url.startsWith("/images/avatars/")) return "avatars";
-  if (url.startsWith("/images/quotes/")) return "quotes";
+  for (const folder of MANAGED_FOLDERS) {
+    if (url.startsWith(`/images/${folder}/`)) return folder;
+    if (url.includes(`/tarto/${folder}/`)) return folder;
+  }
   return "site";
 }
 

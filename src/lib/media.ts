@@ -1,7 +1,12 @@
-import { randomBytes } from "crypto";
-import { mkdir, readdir, stat, unlink, writeFile } from "fs/promises";
+import { readdir, stat } from "fs/promises";
 import path from "path";
 import { prisma } from "@/lib/prisma";
+import {
+  deleteImageByUrl,
+  isCloudinaryUrl,
+  listImages,
+  uploadImage,
+} from "@/lib/cloudinary";
 import {
   folderFromUrl,
   type MediaFolder,
@@ -26,14 +31,6 @@ const MANAGED_FOLDERS: Exclude<MediaFolder, "site">[] = [
   "avatars",
   "quotes",
 ];
-
-function extensionFor(type: string) {
-  if (type === "image/jpeg") return "jpg";
-  if (type === "image/png") return "png";
-  if (type === "image/webp") return "webp";
-  if (type === "image/gif") return "gif";
-  return "jpg";
-}
 
 function asStringArray(value: unknown): string[] {
   if (Array.isArray(value)) {
@@ -61,9 +58,6 @@ export async function saveLibraryImages(files: File[]) {
     throw new Error(`You can upload up to ${MAX_FILES} images at a time.`);
   }
 
-  const uploadDir = imagesDir("library");
-  await mkdir(uploadDir, { recursive: true });
-
   const saved: { filename: string; url: string; mimeType: string }[] = [];
 
   for (const file of files) {
@@ -75,12 +69,10 @@ export async function saveLibraryImages(files: File[]) {
       throw new Error("Each image must be under 5MB.");
     }
 
-    const filename = `${Date.now()}-${randomBytes(4).toString("hex")}.${extensionFor(file.type)}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(uploadDir, filename), buffer);
+    const uploaded = await uploadImage(file, "library");
     saved.push({
-      filename,
-      url: `/images/library/${filename}`,
+      filename: uploaded.publicId.split("/").pop() ?? uploaded.publicId,
+      url: uploaded.url,
       mimeType: file.type,
     });
   }
@@ -93,48 +85,22 @@ export async function deleteMediaFile(url: string) {
   if (folder === "site") {
     throw new Error("Built-in site photos cannot be deleted from here.");
   }
-  if (!url.startsWith(`/images/${folder}/`)) {
+  if (!isCloudinaryUrl(url)) {
     throw new Error("That file is not in the media library.");
   }
 
-  const filename = path.basename(url);
-  const filePath = imagesDir(folder, filename);
-  try {
-    await unlink(filePath);
-  } catch {
-    // ignore missing files
-  }
+  await deleteImageByUrl(url);
 }
 
 async function listFolderFiles(folder: Exclude<MediaFolder, "site">) {
-  const dir = imagesDir(folder);
-  let names: string[] = [];
-  try {
-    names = await readdir(dir);
-  } catch {
-    return [];
-  }
-
-  const items: Omit<MediaItem, "id" | "usedBy" | "canDelete">[] = [];
-
-  for (const name of names) {
-    const ext = name.split(".").pop()?.toLowerCase() ?? "";
-    if (!ALLOWED_EXTENSIONS.has(ext)) continue;
-
-    const filePath = path.join(dir, name);
-    const info = await stat(filePath);
-    if (!info.isFile()) continue;
-
-    items.push({
-      filename: name,
-      url: `/images/${folder}/${name}`,
-      folder,
-      sizeBytes: info.size,
-      createdAt: info.mtime.toISOString(),
-    });
-  }
-
-  return items;
+  const images = await listImages(folder);
+  return images.map((image) => ({
+    filename: image.filename,
+    url: image.url,
+    folder,
+    sizeBytes: image.sizeBytes,
+    createdAt: image.createdAt,
+  }));
 }
 
 async function listSiteFiles() {
@@ -255,7 +221,7 @@ export function parseMediaUrls(formData: FormData, field: string) {
 
   for (const value of formData.getAll(field)) {
     const url = String(value).trim();
-    if (!url.startsWith("/images/")) continue;
+    if (!url.startsWith("/images/") && !isCloudinaryUrl(url)) continue;
     if (seen.has(url)) continue;
     seen.add(url);
     urls.push(url);

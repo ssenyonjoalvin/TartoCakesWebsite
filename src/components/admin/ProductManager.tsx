@@ -9,6 +9,8 @@ import {
   deleteProduct,
   toggleProductPublished,
 } from "@/app/admin/(dashboard)/products/actions";
+import ConfirmDeleteForm from "@/components/admin/ConfirmDeleteForm";
+import { matchesSearch, useAdminSearch } from "@/components/admin/AdminSearch";
 import type { ProductOption, ProductRow } from "@/components/admin/product-types";
 
 type Props = {
@@ -19,11 +21,7 @@ type Props = {
 };
 
 function formatPrice(amount: number) {
-  return `UGX ${amount.toLocaleString("en-UG")}`;
-}
-
-function shortId(id: string) {
-  return `#${id.slice(-6).toUpperCase()}`;
+  return amount.toLocaleString("en-UG");
 }
 
 export default function ProductManager({
@@ -32,11 +30,26 @@ export default function ProductManager({
   flavors,
   sizes,
 }: Props) {
+  const { query } = useAdminSearch();
   const sizeNameById = useMemo(() => {
     return new Map(sizes.map((size) => [size.id, size.name]));
   }, [sizes]);
 
-  const pagination = useTablePagination(products);
+  const visible = useMemo(() => {
+    return products.filter((product) =>
+      matchesSearch(
+        query,
+        product.name,
+        product.description,
+        product.occasionName,
+        product.flavorName,
+        product.sizeNames.join(" "),
+        formatPrice(product.price)
+      )
+    );
+  }, [products, query]);
+
+  const pagination = useTablePagination(visible, query);
 
   return (
     <div>
@@ -67,33 +80,35 @@ export default function ProductManager({
           <table className="min-w-full text-left text-sm">
             <thead>
               <tr className="border-b border-[#F0F0F0] text-xs font-semibold uppercase tracking-wide text-[#9A9A9A]">
-                <th className="px-5 py-3.5">Cake ID</th>
                 <th className="px-5 py-3.5">Name</th>
                 <th className="px-5 py-3.5">Occasion</th>
                 <th className="px-5 py-3.5">Flavor</th>
-                <th className="px-5 py-3.5">Price</th>
+                <th className="px-5 py-3.5">Price (UGX)</th>
                 <th className="px-5 py-3.5">Sizes</th>
                 <th className="px-5 py-3.5">Status</th>
                 <th className="px-5 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {products.length === 0 ? (
+              {pagination.total === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-[#888]">
+                  <td colSpan={7} className="px-5 py-12 text-center text-[#888]">
+                    {query.trim()
+                      ? `No products match “${query.trim()}”.`
+                      : (
+                        <>
                     No cakes yet.{" "}
                     <Link href="/admin/products/new" className="font-semibold text-tarto-red hover:underline">
                       Add your first product
                     </Link>
                     .
+                        </>
+                      )}
                   </td>
                 </tr>
               ) : (
                 pagination.items.map((product) => (
                   <tr key={product.id} className="border-b border-[#F5F5F5] last:border-0">
-                    <td className="px-5 py-4 font-mono text-xs text-[#777]">
-                      {shortId(product.id)}
-                    </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -177,7 +192,10 @@ export default function ProductManager({
                             </svg>
                           </button>
                         </form>
-                        <form action={deleteProduct}>
+                        <ConfirmDeleteForm
+                          action={deleteProduct}
+                          message={`Delete "${product.name}"? This cannot be undone.`}
+                        >
                           <input type="hidden" name="id" value={product.id} />
                           <button
                             type="submit"
@@ -192,7 +210,7 @@ export default function ProductManager({
                               <path d="M10 11v6M14 11v6" />
                             </svg>
                           </button>
-                        </form>
+                        </ConfirmDeleteForm>
                       </div>
                     </td>
                   </tr>

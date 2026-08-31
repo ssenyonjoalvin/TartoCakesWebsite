@@ -5,6 +5,7 @@ import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import TablePagination from "@/components/admin/TablePagination";
 import { useTablePagination } from "@/components/admin/useTablePagination";
 import { updateOrderStatus } from "@/app/admin/(dashboard)/orders/actions";
+import { matchesSearch, useAdminSearch } from "@/components/admin/AdminSearch";
 
 export type OrderUiStatus = "new" | "responded" | "fulfilled" | "cancelled";
 
@@ -21,6 +22,7 @@ export type OrderRow = {
   status: OrderUiStatus;
   dbStatus: string;
   message: string;
+  notes: string;
   cakeName: string | null;
   size: string | null;
   flavor: string | null;
@@ -129,6 +131,7 @@ function exportCsv(rows: OrderRow[]) {
     "Status",
     "Cake",
     "Cake wording",
+    "Comments",
     "Reference photos",
   ];
   const lines = rows.map((row) =>
@@ -143,6 +146,7 @@ function exportCsv(rows: OrderRow[]) {
       statusLabels[row.status],
       row.cakeName ?? "",
       row.message.replace(/\s+/g, " ").trim(),
+      row.notes.replace(/\s+/g, " ").trim(),
       row.referenceImages.join(" "),
     ]
       .map((value) => `"${String(value).replace(/"/g, '""')}"`)
@@ -308,13 +312,32 @@ export default function OrderManager({ orders, stats }: Props) {
     useState<(typeof statusFilters)[number]["id"]>("all");
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
+  const { query } = useAdminSearch();
 
   const visible = useMemo(() => {
-    if (filter === "all") return orders;
-    return orders.filter((order) => order.status === filter);
-  }, [orders, filter]);
+    const byStatus =
+      filter === "all"
+        ? orders
+        : orders.filter((order) => order.status === filter);
 
-  const pagination = useTablePagination(visible, filter);
+    return byStatus.filter((order) =>
+      matchesSearch(
+        query,
+        order.code,
+        order.name,
+        order.email,
+        order.phone,
+        order.occasion,
+        order.cakeName,
+        order.message,
+        order.notes,
+        order.dateLabel,
+        order.eventDateLabel
+      )
+    );
+  }, [orders, filter, query]);
+
+  const pagination = useTablePagination(visible, `${filter}:${query}`);
 
   return (
     <div>
@@ -449,7 +472,9 @@ export default function OrderManager({ orders, stats }: Props) {
               {pagination.total === 0 ? (
                 <tr>
                     <td colSpan={7} className="px-5 py-12 text-center text-[#888]">
-                    No orders in this filter yet.
+                    {query.trim()
+                      ? "No orders match this search."
+                      : "No orders in this filter yet."}
                   </td>
                 </tr>
               ) : (
@@ -575,10 +600,10 @@ export default function OrderManager({ orders, stats }: Props) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="order-detail-title"
-            className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
+            className="flex max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-xl flex-col overflow-hidden rounded-3xl bg-white shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="relative overflow-hidden border-b border-[#F0F0F0] bg-[linear-gradient(135deg,#FFF8F8_0%,#FFFFFF_55%,#FFF9EF_100%)] px-6 pb-5 pt-6">
+            <div className="relative shrink-0 overflow-hidden border-b border-[#F0F0F0] bg-[linear-gradient(135deg,#FFF8F8_0%,#FFFFFF_55%,#FFF9EF_100%)] px-6 pb-5 pt-6">
               <button
                 type="button"
                 onClick={() => setSelected(null)}
@@ -620,7 +645,7 @@ export default function OrderManager({ orders, stats }: Props) {
               </div>
             </div>
 
-            <div className="space-y-5 px-6 py-5">
+            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
               <section>
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A0A0A0]">
                   Contact
@@ -719,10 +744,27 @@ export default function OrderManager({ orders, stats }: Props) {
 
               <section>
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A0A0A0]">
+                  Comments for the team
+                </h3>
+                <div className="mt-2.5 rounded-2xl border border-[#F3E8D8] bg-[#FFFBF4] px-4 py-3.5">
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#3A3A3A]">
+                    {selected.notes || "No extra comments."}
+                  </p>
+                </div>
+              </section>
+
+              <section>
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A0A0A0]">
                   Cake photos from customer
                 </h3>
                 {selected.referenceImages.length > 0 ? (
-                  <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+                  <div
+                    className={`mt-2.5 grid gap-2.5 ${
+                      selected.referenceImages.length === 1
+                        ? "grid-cols-1"
+                        : "grid-cols-2"
+                    }`}
+                  >
                     {selected.referenceImages.map((src) => (
                       <a
                         key={src}
@@ -748,7 +790,7 @@ export default function OrderManager({ orders, stats }: Props) {
               </section>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#F0F0F0] bg-[#FAFAFA] px-6 py-4">
+            <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-[#F0F0F0] bg-[#FAFAFA] px-6 py-4">
               <button
                 type="button"
                 onClick={() => setSelected(null)}

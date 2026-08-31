@@ -109,9 +109,6 @@ export async function createBlogPost(
   const quote = String(formData.get("quote") ?? "").trim() || null;
   const occasionId = String(formData.get("occasionId") ?? "").trim() || null;
   const featured = formData.get("featured") === "on";
-  const statusRaw = String(formData.get("status") ?? "DRAFT").trim();
-  const status: BlogStatus =
-    statusRaw === "PUBLISHED" ? "PUBLISHED" : "DRAFT";
   const sections = parseSections(formData);
 
   if (!title) return { error: "Title is required." };
@@ -166,13 +163,14 @@ export async function createBlogPost(
       featured,
       authorId: session.id,
       occasionId,
-      status,
-      publishedAt: status === "PUBLISHED" ? new Date() : null,
+      status: "DRAFT",
+      publishedAt: null,
     },
   });
 
   revalidatePath("/admin/blog");
   revalidatePath("/blog");
+  revalidatePath(`/blog/${slug}`);
   redirect("/admin/blog");
 }
 
@@ -189,9 +187,6 @@ export async function updateBlogPost(
   const quote = String(formData.get("quote") ?? "").trim() || null;
   const occasionId = String(formData.get("occasionId") ?? "").trim() || null;
   const featured = formData.get("featured") === "on";
-  const statusRaw = String(formData.get("status") ?? "DRAFT").trim();
-  const status: BlogStatus =
-    statusRaw === "PUBLISHED" ? "PUBLISHED" : "DRAFT";
   const sections = parseSections(formData);
 
   if (!id) return { error: "Post not found." };
@@ -236,10 +231,6 @@ export async function updateBlogPost(
   }
 
   const slug = await uniqueSlug(title, id);
-  const publishedAt =
-    status === "PUBLISHED"
-      ? existing.publishedAt ?? new Date()
-      : null;
 
   await prisma.blogPost.update({
     where: { id },
@@ -254,8 +245,6 @@ export async function updateBlogPost(
       quote,
       featured,
       occasionId,
-      status,
-      publishedAt,
     },
   });
 
@@ -298,4 +287,5 @@ export async function toggleBlogStatus(formData: FormData) {
 
   revalidatePath("/admin/blog");
   revalidatePath("/blog");
+  revalidatePath(`/blog/${post.slug}`);
 }

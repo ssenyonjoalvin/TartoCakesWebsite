@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  blogPosts,
-  getPostBySlug,
-  getRelatedPosts,
-} from "@/data/blog";
+import { blogPosts } from "@/data/blog";
+import { getBlogPostBySlug, getRelatedBlogPosts } from "@/lib/public-blog";
+
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -18,7 +17,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getBlogPostBySlug(slug);
   if (!post) return { title: "Story Not Found" };
   return {
     title: post.title,
@@ -28,10 +27,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getBlogPostBySlug(slug);
   if (!post) notFound();
 
-  const related = getRelatedPosts(post.slug, 3);
+  const related = await getRelatedBlogPosts(post.slug, 3);
+  const gallery = post.gallery.filter(Boolean);
 
   return (
     <article className="bg-tarto-cream py-10 lg:py-14">
@@ -70,40 +70,46 @@ export default async function BlogPostPage({ params }: Props) {
 
           <div className="mt-10 space-y-8 text-[1.02rem] leading-relaxed text-tarto-ink/80">
             {post.sections.map((section, index) => (
-              <div key={section.heading}>
+              <div key={`${section.heading}-${index}`}>
                 <h2 className="text-xl font-bold text-tarto-red sm:text-2xl">
                   {section.heading}
                 </h2>
                 <p className="mt-3">{section.body}</p>
 
-                {index === 0 && (
-                  <div className="mt-8 grid grid-cols-2 items-stretch gap-4">
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
-                      <Image
-                        src={post.gallery[0]}
-                        alt={`${post.title} detail`}
-                        fill
-                        sizes="(max-width: 768px) 50vw, 420px"
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="relative aspect-[3/4] overflow-hidden rounded-2xl sm:aspect-[4/5]">
-                      <Image
-                        src={post.gallery[1]}
-                        alt={`${post.title} process`}
-                        fill
-                        sizes="(max-width: 768px) 50vw, 420px"
-                        className="object-cover"
-                      />
-                    </div>
+                {index === 0 && gallery.length > 0 ? (
+                  <div
+                    className={`mt-8 grid items-stretch gap-4 ${
+                      gallery.length === 1 ? "grid-cols-1" : "grid-cols-2"
+                    }`}
+                  >
+                    {gallery.slice(0, 2).map((src, imageIndex) => (
+                      <div
+                        key={src}
+                        className={`relative overflow-hidden rounded-2xl ${
+                          gallery.length === 1
+                            ? "aspect-[16/10]"
+                            : imageIndex === 0
+                              ? "aspect-[4/3]"
+                              : "aspect-[3/4] sm:aspect-[4/5]"
+                        }`}
+                      >
+                        <Image
+                          src={src}
+                          alt={`${post.title} ${imageIndex === 0 ? "detail" : "process"}`}
+                          fill
+                          sizes="(max-width: 768px) 50vw, 420px"
+                          className="object-cover"
+                        />
+                      </div>
+                    ))}
                   </div>
-                )}
+                ) : null}
 
-                {index === 1 && post.quote && (
+                {index === 1 && post.quote ? (
                   <blockquote className="mt-8 border-l-4 border-tarto-yellow bg-white/70 px-5 py-4 text-[1.05rem] italic text-tarto-ink">
                     {post.quote}
                   </blockquote>
-                )}
+                ) : null}
               </div>
             ))}
           </div>
@@ -125,36 +131,38 @@ export default async function BlogPostPage({ params }: Props) {
           </div>
         </div>
 
-        <section className="mt-16">
-          <h2 className="text-2xl font-bold text-tarto-ink">Related Stories</h2>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {related.map((item) => (
-              <Link
-                key={item.id}
-                href={`/blog/${item.slug}`}
-                className="group overflow-hidden rounded-[1.25rem] bg-white shadow-[0_8px_30px_rgba(26,26,26,0.05)]"
-              >
-                <div className="relative aspect-[16/10] overflow-hidden">
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 33vw"
-                    className="object-cover transition duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-orange">
-                    {item.category}
-                  </p>
-                  <h3 className="mt-2 text-lg font-bold leading-snug text-tarto-ink group-hover:text-tarto-red">
-                    {item.title}
-                  </h3>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
+        {related.length > 0 ? (
+          <section className="mt-16">
+            <h2 className="text-2xl font-bold text-tarto-ink">Related Stories</h2>
+            <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {related.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/blog/${item.slug}`}
+                  className="group overflow-hidden rounded-[1.25rem] bg-white shadow-[0_8px_30px_rgba(26,26,26,0.05)]"
+                >
+                  <div className="relative aspect-[16/10] overflow-hidden">
+                    <Image
+                      src={item.image}
+                      alt={item.title}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 33vw"
+                      className="object-cover transition duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-orange">
+                      {item.category}
+                    </p>
+                    <h3 className="mt-2 text-lg font-bold leading-snug text-tarto-ink group-hover:text-tarto-red">
+                      {item.title}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
     </article>
   );

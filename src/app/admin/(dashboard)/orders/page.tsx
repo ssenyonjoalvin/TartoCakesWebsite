@@ -122,6 +122,7 @@ export default async function AdminOrdersPage() {
       status: mapUiStatus(row.status),
       dbStatus: row.status,
       message: row.message,
+      notes: row.notes ?? "",
       cakeName: row.cakeName ?? row.cake?.name ?? null,
       size: row.size,
       flavor: row.flavor,

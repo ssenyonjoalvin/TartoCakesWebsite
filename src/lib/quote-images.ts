@@ -1,6 +1,4 @@
-import { randomBytes } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
+import { uploadImage } from "@/lib/cloudinary";
 
 const ALLOWED_TYPES = new Set([
   "image/jpeg",
@@ -13,19 +11,6 @@ const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif"]);
 const MAX_BYTES = 5 * 1024 * 1024;
 export const MAX_QUOTE_IMAGES = 3;
 
-function extensionFor(file: File) {
-  if (file.type === "image/jpeg") return "jpg";
-  if (file.type === "image/png") return "png";
-  if (file.type === "image/webp") return "webp";
-  if (file.type === "image/gif") return "gif";
-  const ext = file.name.split(".").pop()?.toLowerCase();
-  if (ext === "jpeg") return "jpg";
-  if (ext === "jpg" || ext === "png" || ext === "webp" || ext === "gif") {
-    return ext;
-  }
-  return "jpg";
-}
-
 function isAllowedImage(file: File) {
   if (ALLOWED_TYPES.has(file.type)) return true;
   const ext = file.name.split(".").pop()?.toLowerCase();
@@ -36,9 +21,6 @@ export async function saveQuoteImages(files: File[]) {
   if (files.length > MAX_QUOTE_IMAGES) {
     throw new Error(`You can attach up to ${MAX_QUOTE_IMAGES} photos.`);
   }
-
-  const uploadDir = path.join(process.cwd(), "public", "images", "quotes");
-  await mkdir(uploadDir, { recursive: true });
 
   const urls: string[] = [];
 
@@ -51,10 +33,8 @@ export async function saveQuoteImages(files: File[]) {
       throw new Error("Each photo must be under 5MB.");
     }
 
-    const filename = `${Date.now()}-${randomBytes(4).toString("hex")}.${extensionFor(file)}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(uploadDir, filename), buffer);
-    urls.push(`/images/quotes/${filename}`);
+    const uploaded = await uploadImage(file, "quotes");
+    urls.push(uploaded.url);
   }
 
   return urls;

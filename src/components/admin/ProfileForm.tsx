@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   updateOwnProfile,
   type ProfileFormState,
@@ -17,8 +17,69 @@ type Props = {
 
 const initialState: ProfileFormState = {};
 
-const inputClass =
-  "mt-1.5 w-full rounded-xl border border-[#E0E0E0] bg-[#F7F7F7] px-3 py-2.5 text-sm text-tarto-ink outline-none focus:border-tarto-red/40 focus:bg-white";
+const fieldClass =
+  "w-full rounded-xl border border-[#E0E0E0] bg-[#F7F7F7] px-3 py-2.5 text-sm text-tarto-ink outline-none focus:border-tarto-red/40 focus:bg-white";
+const inputClass = `mt-1.5 ${fieldClass}`;
+
+function PasswordField({
+  id,
+  name,
+  label,
+  autoComplete,
+  minLength,
+}: {
+  id: string;
+  name: string;
+  label: string;
+  autoComplete: string;
+  minLength?: number;
+}) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className="mt-4">
+      <label htmlFor={id} className="text-sm font-bold text-tarto-ink">
+        {label}
+      </label>
+      <div className="relative mt-1.5">
+        <input
+          id={id}
+          name={name}
+          type={visible ? "text" : "password"}
+          minLength={minLength}
+          autoComplete={autoComplete}
+          className={`${fieldClass} pr-11`}
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((value) => !value)}
+          className="absolute inset-y-0 right-3 flex items-center text-tarto-ink/35 transition hover:text-tarto-red"
+          aria-label={visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
+        >
+          {visible ? (
+            <svg
+              viewBox="0 0 24 24"
+              className="h-[18px] w-[18px] fill-none stroke-current stroke-[1.8]"
+              aria-hidden
+            >
+              <path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" />
+              <path d="m4 4 16 16" />
+            </svg>
+          ) : (
+            <svg
+              viewBox="0 0 24 24"
+              className="h-[18px] w-[18px] fill-none stroke-current stroke-[1.8]"
+              aria-hidden
+            >
+              <path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" />
+              <circle cx="12" cy="12" r="2.5" />
+            </svg>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function ProfileForm({ user }: Props) {
   const [state, formAction, pending] = useActionState(
@@ -64,41 +125,23 @@ export default function ProfileForm({ user }: Props) {
           your current one.
         </p>
 
-        <div className="mt-4">
-          <label
-            htmlFor="currentPassword"
-            className="text-sm font-bold text-tarto-ink"
-          >
-            Current password
-          </label>
-          <input
-            id="currentPassword"
-            name="currentPassword"
-            type="password"
-            autoComplete="current-password"
-            className={inputClass}
-          />
-        </div>
+        <PasswordField
+          id="currentPassword"
+          name="currentPassword"
+          label="Current password"
+          autoComplete="current-password"
+        />
 
-        <div className="mt-4">
-          <label
-            htmlFor="newPassword"
-            className="text-sm font-bold text-tarto-ink"
-          >
-            New password
-          </label>
-          <input
-            id="newPassword"
-            name="newPassword"
-            type="password"
-            minLength={8}
-            autoComplete="new-password"
-            className={inputClass}
-          />
-          <p className="mt-1 text-xs text-tarto-ink/55">
-            At least 8 characters.
-          </p>
-        </div>
+        <PasswordField
+          id="newPassword"
+          name="newPassword"
+          label="New password"
+          autoComplete="new-password"
+          minLength={8}
+        />
+        <p className="mt-1 text-xs text-tarto-ink/55">
+          At least 8 characters.
+        </p>
       </div>
 
       {state.error ? (

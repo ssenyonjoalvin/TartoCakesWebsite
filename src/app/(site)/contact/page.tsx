@@ -4,7 +4,7 @@ import ContactForm from "@/components/ContactForm";
 import LocationMap from "@/components/LocationMap";
 import SocialIcons from "@/components/SocialIcons";
 import { contactInfo, formatPhone, phoneHref } from "@/data/contact";
-import { cakes as staticCakes } from "@/data/cakes";
+import { getPublishedCakes } from "@/lib/public-cakes";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -14,17 +14,8 @@ export const metadata: Metadata = {
 };
 
 async function getCakeOptions() {
-  try {
-    const rows = await prisma.cake.findMany({
-      where: { published: true },
-      orderBy: { name: "asc" },
-      select: { name: true, slug: true },
-    });
-    if (rows.length > 0) return rows;
-  } catch {
-    // fall through to static catalogue
-  }
-  return staticCakes.map((cake) => ({ name: cake.name, slug: cake.slug }));
+  const cakes = await getPublishedCakes();
+  return cakes.map((cake) => ({ name: cake.name, slug: cake.slug }));
 }
 
 async function getOccasionOptions() {

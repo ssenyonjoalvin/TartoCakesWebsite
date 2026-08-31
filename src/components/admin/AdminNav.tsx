@@ -9,6 +9,7 @@ type NavItem = {
   href: string;
   label: string;
   adminOnly?: boolean;
+  badge?: "inquiries" | "reviews";
   icon: ReactNode;
 };
 
@@ -64,6 +65,11 @@ const icons = {
       <path d="M5 19a7 7 0 0 1 14 0" />
     </svg>
   ),
+  reviews: (
+    <svg viewBox="0 0 24 24" className={iconClass} fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M12 3.6 14.5 9l6 .7-4.4 4 1.2 5.9L12 16.8 6.7 19.6l1.2-5.9L3.5 9.7 9.5 9 12 3.6Z" />
+    </svg>
+  ),
   settings: (
     <svg viewBox="0 0 24 24" className={iconClass} fill="none" stroke="currentColor" strokeWidth="1.8">
       <circle cx="12" cy="12" r="3" />
@@ -77,7 +83,8 @@ const nav: NavItem[] = [
   { href: "/admin/users", label: "User Management", adminOnly: true, icon: icons.users },
   { href: "/admin/blog", label: "Blog Management", icon: icons.blog },
   { href: "/admin/products", label: "Product Management", icon: icons.products },
-  { href: "/admin/orders", label: "Orders / Inquiries", icon: icons.orders },
+  { href: "/admin/orders", label: "Orders / Inquiries", badge: "inquiries", icon: icons.orders },
+  { href: "/admin/reviews", label: "Cake Reviews", badge: "reviews", icon: icons.reviews },
   { href: "/admin/media", label: "Media Management", icon: icons.media },
   { href: "/admin/customers", label: "Customer Management", icon: icons.customers },
 ];
@@ -97,7 +104,17 @@ function navClass(active: boolean) {
   }`;
 }
 
-export default function AdminNav({ role }: { role: AdminRole }) {
+export default function AdminNav({
+  role,
+  newInquiries = 0,
+  pendingReviews = 0,
+  onNavigate,
+}: {
+  role: AdminRole;
+  newInquiries?: number;
+  pendingReviews?: number;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const items = nav.filter((item) => !item.adminOnly || role === "ADMIN");
   const settingsActive =
@@ -116,14 +133,26 @@ export default function AdminNav({ role }: { role: AdminRole }) {
             item.href === "/admin"
               ? pathname === "/admin"
               : pathname.startsWith(item.href);
+          const badgeCount =
+            item.badge === "inquiries"
+              ? newInquiries
+              : item.badge === "reviews"
+                ? pendingReviews
+                : 0;
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={navClass(active)}
             >
               {item.icon}
-              <span>{item.label}</span>
+              <span className="min-w-0 flex-1 leading-snug">{item.label}</span>
+              {badgeCount > 0 ? (
+                <span className="mr-1 min-w-[1.15rem] rounded-full bg-tarto-red px-1.5 py-0.5 text-center text-[10px] font-bold leading-none text-white">
+                  {badgeCount > 99 ? "99+" : badgeCount}
+                </span>
+              ) : null}
               {active ? (
                 <span className="absolute inset-y-1.5 right-0 w-[3px] rounded-l-full bg-tarto-red" />
               ) : null}
@@ -162,6 +191,7 @@ export default function AdminNav({ role }: { role: AdminRole }) {
                   <Link
                     key={child.href}
                     href={child.href}
+                    onClick={onNavigate}
                     className={`relative block rounded-lg px-3 py-2 text-sm font-medium transition ${
                       active
                         ? "bg-[#FBEAEA] text-tarto-red"
@@ -181,6 +211,7 @@ export default function AdminNav({ role }: { role: AdminRole }) {
 
         <Link
           href="/contact"
+          onClick={onNavigate}
           className="flex items-center justify-center rounded-xl bg-tarto-red px-4 py-2.5 text-sm font-bold text-white transition hover:bg-tarto-red/90"
         >
           Request a Quote

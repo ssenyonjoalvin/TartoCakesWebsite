@@ -35,6 +35,7 @@ function poolOptions() {
     user: db.user,
     password: db.password,
     database: db.database,
+    ssl: db.ssl,
     connectionLimit: envInt("DATABASE_CONNECTION_LIMIT", isProd ? 10 : 5),
     acquireTimeout: envInt("DATABASE_ACQUIRE_TIMEOUT_MS", 20_000),
     connectTimeout: envInt("DATABASE_CONNECT_TIMEOUT_MS", 8_000),

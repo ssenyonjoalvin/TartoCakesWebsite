@@ -46,8 +46,10 @@ async function withServerConnection<T>(
     port: db.port,
     user: db.user,
     password: db.password,
+    ssl: db.ssl,
     allowPublicKeyRetrieval: true,
     multipleStatements: true,
+    connectTimeout: 15_000,
   });
 
   try {
@@ -170,6 +172,7 @@ function createClient() {
       ...db,
       connectionLimit: 2,
       allowPublicKeyRetrieval: true,
+      connectTimeout: 15_000,
     }),
   });
 }

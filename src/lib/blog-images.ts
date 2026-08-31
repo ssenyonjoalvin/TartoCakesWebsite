@@ -1,6 +1,4 @@
-import { randomBytes } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
+import { uploadImage } from "@/lib/cloudinary";
 
 const ALLOWED_TYPES = new Set([
   "image/jpeg",
@@ -12,21 +10,10 @@ const ALLOWED_TYPES = new Set([
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGES = 8;
 
-function extensionFor(type: string) {
-  if (type === "image/jpeg") return "jpg";
-  if (type === "image/png") return "png";
-  if (type === "image/webp") return "webp";
-  if (type === "image/gif") return "gif";
-  return "jpg";
-}
-
 export async function saveBlogImages(files: File[]) {
   if (files.length > MAX_IMAGES) {
     throw new Error(`You can upload up to ${MAX_IMAGES} images.`);
   }
-
-  const uploadDir = path.join(process.cwd(), "public", "images", "blog");
-  await mkdir(uploadDir, { recursive: true });
 
   const urls: string[] = [];
 
@@ -39,10 +26,8 @@ export async function saveBlogImages(files: File[]) {
       throw new Error("Each image must be under 5MB.");
     }
 
-    const filename = `${Date.now()}-${randomBytes(4).toString("hex")}.${extensionFor(file.type)}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(uploadDir, filename), buffer);
-    urls.push(`/images/blog/${filename}`);
+    const uploaded = await uploadImage(file, "blog");
+    urls.push(uploaded.url);
   }
 
   return urls;

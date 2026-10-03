@@ -102,3 +102,38 @@ export function relatedCakes(
     })
     .slice(0, limit);
 }
+
+export type OccasionShowcase = {
+  slug: string;
+  name: string;
+  image: string;
+  cakeCount: number;
+};
+
+/**
+ * Occasions that have published cakes, each with a real cake photo as its
+ * cover (featured cake first). Occasions without cakes or photos are left
+ * out rather than shown with a stock image.
+ */
+export async function getOccasionShowcase(): Promise<OccasionShowcase[]> {
+  const [cakes, occasions] = await Promise.all([
+    getPublishedCakes(),
+    getActiveOccasions(),
+  ]);
+
+  return occasions.flatMap((occasion) => {
+    const matching = cakes.filter(
+      (cake) => cake.occasionSlug === occasion.slug && cake.image
+    );
+    if (matching.length === 0) return [];
+    const cover = matching.find((cake) => cake.featured) ?? matching[0];
+    return [
+      {
+        slug: occasion.slug,
+        name: occasion.name,
+        image: cover.image,
+        cakeCount: matching.length,
+      },
+    ];
+  });
+}

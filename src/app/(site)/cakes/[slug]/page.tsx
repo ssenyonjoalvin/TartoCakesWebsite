@@ -2,13 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import CakeCard from "@/components/CakeCard";
 import CakeOrderOptions from "@/components/CakeOrderOptions";
-import { formatPrice } from "@/data/cakes";
 import {
   getPublishedCakeBySlug,
   getPublishedCakes,
   relatedCakes,
 } from "@/lib/public-cakes";
 import CakeImageGallery from "@/components/CakeImageGallery";
+import { formatCakePrice, showsStartingPrice } from "@/lib/pricing";
 import CakeReviews from "@/components/CakeReviews";
 import StarRating from "@/components/StarRating";
 import {
@@ -68,8 +68,14 @@ export default async function CakeDetailPage({ params }: Props) {
             </h1>
 
             <p className="mt-3 text-2xl font-bold text-tarto-red">
-              {formatPrice(cake.price)}
+              {formatCakePrice(cake)}
             </p>
+            {showsStartingPrice(cake) ? (
+              <p className="mt-1 text-sm text-tarto-ink/70">
+                Final price depends on the size, flavour and design you choose.
+                We confirm it with you before baking.
+              </p>
+            ) : null}
 
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-tarto-ink/60">
               <a

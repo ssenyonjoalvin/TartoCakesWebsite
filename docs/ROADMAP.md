@@ -1,4 +1,4 @@
-# Tarto Cakes UG — Improvement Roadmap
+    # Tarto Cakes UG — Improvement Roadmap
 
 _Audit date: 2026-10-03 · Branch audited: `develop` · Live preview: tarto-cakes-website-git-develop-…vercel.app_
 
@@ -476,3 +476,22 @@ Please answer each item, or mark it "don't show".
 **Not yet done / assumptions**
 - Unverified claims (TRUST-001) are left in place until the owner answers §8. Removing real information would be worse than waiting a few days.
 - No visual browser test at every breakpoint yet. Phase 2 should include a manual pass at 320/375/768/1024/1440.
+
+### Phase 2 — Product experience (2026-10-03) ✅ (uncommitted)
+
+**Changed**
+- **Catalog (CAT-001):** search (all words must match across name, description, occasion and flavours, accent-insensitive), occasion chips, flavour filter, and sort (featured, price ↑/↓, top rated, name). Filters live in the URL (`/cakes?occasion=wedding&sort=price-asc`). The page reads them on the server, so shared links and the first HTML are already filtered. Typing uses `history.replaceState`, so there's no reload and no history spam. Includes a result count (`role="status"`), "Clear filters", and an empty state with a custom-cake CTA. Occasion chips only show occasions that have published cakes. Flavour options come from published cakes only. Chips scroll horizontally on phones.
+- Logic lives in `src/lib/catalog-filter.ts` (pure functions, no React/Prisma), so a future API can reuse it.
+- **Cards (CAT-002):** occasion badge (catalog only), 2-line description, larger price, "Photo coming soon" fallback, tighter `sizes`.
+- **"From" pricing (PRICE-001):** `src/lib/pricing.ts` plus a `business.pricing.listedPriceIsStartingPrice` flag in `src/data/business.ts`. **Off by default** until the owner confirms (§8 Q6). When on, cakes with several sizes/flavours show "From UGX …" and the detail page explains the final price is confirmed before baking.
+- **Homepage:** "Shop by occasion" grid (DB occasions, each with a real cake photo and design count, linking to the filtered catalog) and a "View All Cakes" button under bestsellers.
+
+**Tests performed**
+- `tsc` passes. No new lint errors.
+- 13 assertions on the filter module (filtering, multi-word search, each sort, URL round-trip, invalid `sort` param) all pass.
+- Dev server: `/`, `/cakes`, `?occasion=wedding` (5 cards), `?q=zzzz` (empty state), `?sort=price-desc` (most expensive first) all return 200 with correct server-rendered cards.
+
+**Decisions / not done**
+- **Price-range filter skipped:** with ~15 cakes, price sorting covers the need. Revisit past ~40 cakes.
+- **Separate gallery (GAL-001) deferred:** it would duplicate the catalog. It's better built in Phase 4 once the owner confirms which photos are Tarto's own work (some may be stock images, see §8).
+- Still no visual pass at each breakpoint (320–1440px).

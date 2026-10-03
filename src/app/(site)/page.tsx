@@ -1,7 +1,9 @@
 import CakeCard from "@/components/CakeCard";
 import HomeHero from "@/components/HomeHero";
+import OccasionGrid from "@/components/OccasionGrid";
+import { ButtonLink } from "@/components/ui/Button";
 import SectionHeading from "@/components/ui/SectionHeading";
-import { getPublishedCakes } from "@/lib/public-cakes";
+import { getOccasionShowcase, getPublishedCakes } from "@/lib/public-cakes";
 
 const features = [
   {
@@ -84,7 +86,10 @@ const features = [
 ];
 
 export default async function HomePage() {
-  const published = await getPublishedCakes();
+  const [published, occasions] = await Promise.all([
+    getPublishedCakes(),
+    getOccasionShowcase(),
+  ]);
   const featured = published.filter((cake) => cake.featured);
   const bestsellers = (featured.length > 0 ? featured : published).slice(0, 4);
 
@@ -113,6 +118,20 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {occasions.length > 0 ? (
+        <section className="bg-white py-14 sm:py-16">
+          <div className="site-container">
+            <SectionHeading
+              eyebrow="Shop by occasion"
+              title="What are you celebrating?"
+            />
+            <div className="mt-10">
+              <OccasionGrid occasions={occasions} />
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <section className="bg-tarto-cream py-14 sm:py-16">
         <div className="site-container">
           <SectionHeading
@@ -123,6 +142,11 @@ export default async function HomePage() {
             {bestsellers.map((cake) => (
               <CakeCard key={cake.id} cake={cake} />
             ))}
+          </div>
+          <div className="mt-10 flex justify-center">
+            <ButtonLink href="/cakes" variant="outline" size="lg">
+              View All Cakes
+            </ButtonLink>
           </div>
         </div>
       </section>

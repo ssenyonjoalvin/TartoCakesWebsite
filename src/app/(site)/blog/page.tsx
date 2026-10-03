@@ -27,7 +27,7 @@ export default async function BlogPage() {
     return (
       <section className="bg-tarto-cream py-14">
         <div className="site-container text-center">
-          <p className="text-sm font-semibold tracking-[0.18em] text-tarto-orange">
+          <p className="text-sm font-semibold tracking-[0.18em] text-tarto-amber">
             STORIES & IDEAS
           </p>
           <h1 className="mt-3 text-4xl font-bold text-tarto-ink sm:text-5xl">
@@ -46,7 +46,7 @@ export default async function BlogPage() {
     <section className="bg-tarto-cream py-14">
       <div className="site-container">
         <div className="text-center">
-          <p className="text-sm font-semibold tracking-[0.18em] text-tarto-orange">
+          <p className="text-sm font-semibold tracking-[0.18em] text-tarto-amber">
             STORIES & IDEAS
           </p>
           <h1 className="mt-3 text-4xl font-bold text-tarto-ink sm:text-5xl">
@@ -71,7 +71,7 @@ export default async function BlogPage() {
                 </div>
               </Link>
               <div className="p-6 sm:p-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-orange">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-amber">
                   {featured.category}
                 </p>
                 <h2 className="mt-2 text-2xl font-bold text-tarto-ink sm:text-3xl">
@@ -113,7 +113,7 @@ export default async function BlogPage() {
                     </div>
                   </Link>
                   <div className="flex flex-1 flex-col p-5 sm:p-6">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-orange">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-amber">
                       {post.category}
                     </p>
                     <h3 className="mt-2 text-lg font-bold leading-snug text-tarto-ink">

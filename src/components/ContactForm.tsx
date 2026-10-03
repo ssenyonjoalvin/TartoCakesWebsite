@@ -9,6 +9,7 @@ import {
 
 const initialState: QuoteFormState = {};
 const OTHER_OCCASION = "__other__";
+const CUSTOM_CAKE = "Custom Cake";
 const MAX_REFERENCE_IMAGES = 3;
 const MAX_REFERENCE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_REFERENCE_TYPES = new Set([
@@ -19,7 +20,7 @@ const ALLOWED_REFERENCE_TYPES = new Set([
 ]);
 
 const fieldClass =
-  "mt-1.5 w-full rounded-md border border-tarto-ink/10 bg-tarto-cream px-3 py-2.5 text-sm outline-none focus:border-tarto-red";
+  "mt-1.5 min-h-11 w-full rounded-md border border-tarto-ink/15 bg-tarto-cream px-3 py-2.5 text-base outline-none focus:border-tarto-red focus:ring-2 focus:ring-tarto-red/25 sm:text-sm";
 
 type CakeOption = {
   name: string;
@@ -77,7 +78,8 @@ export default function ContactForm({
 
   const cakeOptions = useMemo(() => {
     const names = cakes.map((cake) => cake.name);
-    if (presetCake && !names.includes(presetCake)) {
+    // "Custom Cake" always has its own <option> below; don't add it twice.
+    if (presetCake && presetCake !== CUSTOM_CAKE && !names.includes(presetCake)) {
       return [presetCake, ...names];
     }
     return names;
@@ -264,7 +266,7 @@ export default function ContactForm({
               {name}
             </option>
           ))}
-          <option value="Custom Cake">Custom Cake</option>
+          <option value={CUSTOM_CAKE}>{CUSTOM_CAKE}</option>
         </select>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -379,6 +381,7 @@ export default function ContactForm({
                 />
                 <button
                   type="button"
+                  aria-label={`Remove photo ${index + 1}`}
                   onClick={() => removeReferenceFile(index)}
                   className="absolute right-1.5 top-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-tarto-red shadow-sm"
                 >

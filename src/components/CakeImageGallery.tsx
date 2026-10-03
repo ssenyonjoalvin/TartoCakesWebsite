@@ -35,7 +35,7 @@ export default function CakeImageGallery({ name, images }: Props) {
       </div>
       {photos.length > 1 ? (
         <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-5">
-          {photos.map((src) => (
+          {photos.map((src, index) => (
             <button
               key={src}
               type="button"
@@ -45,7 +45,8 @@ export default function CakeImageGallery({ name, images }: Props) {
                   ? "ring-2 ring-tarto-red"
                   : "opacity-80 hover:opacity-100"
               }`}
-              aria-label="View photo"
+              aria-label={`Show photo ${index + 1} of ${name}`}
+              aria-pressed={active === src}
             >
               <Image
                 src={src}

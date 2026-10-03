@@ -1,5 +1,6 @@
 import CakeCard from "@/components/CakeCard";
 import HomeHero from "@/components/HomeHero";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { getPublishedCakes } from "@/lib/public-cakes";
 
 const features = [
@@ -114,9 +115,10 @@ export default async function HomePage() {
 
       <section className="bg-tarto-cream py-14 sm:py-16">
         <div className="site-container">
-          <h2 className="text-center text-3xl font-bold tracking-wide text-tarto-red sm:text-4xl">
-            OUR BESTSELLERS
-          </h2>
+          <SectionHeading
+            eyebrow="Customer favourites"
+            title="Our Bestsellers"
+          />
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {bestsellers.map((cake) => (
               <CakeCard key={cake.id} cake={cake} />

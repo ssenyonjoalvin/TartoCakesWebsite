@@ -71,7 +71,7 @@ export default async function ContactPage() {
       <section className="bg-tarto-cream py-14">
         <div className="site-container">
           <div className="text-center">
-            <p className="text-sm font-semibold tracking-[0.18em] text-tarto-orange">
+            <p className="text-sm font-semibold tracking-[0.18em] text-tarto-amber">
               WE&apos;D LOVE TO HEAR FROM YOU
             </p>
             <h1 className="mt-3 text-4xl font-bold text-tarto-ink sm:text-5xl">

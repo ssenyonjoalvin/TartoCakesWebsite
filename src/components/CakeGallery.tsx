@@ -48,11 +48,16 @@ export default function CakeGallery({ cakes, occasions }: Props) {
 
   return (
     <div>
-      <div className="flex flex-wrap justify-center gap-2">
+      <div
+        role="group"
+        aria-label="Filter cakes by occasion"
+        className="flex flex-wrap justify-center gap-2"
+      >
         <button
           type="button"
+          aria-pressed={active === "all"}
           onClick={() => setActive("all")}
-          className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
+          className={`min-h-11 rounded-full px-4 py-2 text-sm font-semibold transition ${
             active === "all"
               ? "bg-tarto-red text-white"
               : "bg-white text-tarto-ink hover:bg-tarto-yellow/40"
@@ -64,8 +69,9 @@ export default function CakeGallery({ cakes, occasions }: Props) {
           <button
             key={occasion.slug}
             type="button"
+            aria-pressed={active === occasion.slug}
             onClick={() => setActive(occasion.slug)}
-            className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
+            className={`min-h-11 rounded-full px-4 py-2 text-sm font-semibold transition ${
               active === occasion.slug
                 ? "bg-tarto-red text-white"
                 : "bg-white text-tarto-ink hover:bg-tarto-yellow/40"
@@ -83,7 +89,7 @@ export default function CakeGallery({ cakes, occasions }: Props) {
       </div>
 
       {filtered.length === 0 && (
-        <p className="mt-10 text-center text-tarto-ink/70">
+        <p role="status" className="mt-10 text-center text-tarto-ink/70">
           No cakes for this occasion yet.
         </p>
       )}

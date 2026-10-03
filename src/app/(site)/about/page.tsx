@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { ButtonLink } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "About Us",
@@ -71,18 +72,10 @@ export default function AboutPage() {
               dessert — it is happiness, shared slice by slice.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link
-                href="/cakes"
-                className="rounded-full bg-tarto-red px-6 py-3 text-sm font-bold text-white transition hover:bg-tarto-red/90"
-              >
-                Explore Our Gallery
-              </Link>
-              <Link
-                href="#bakers"
-                className="rounded-full border border-tarto-red bg-transparent px-6 py-3 text-sm font-bold text-tarto-red transition hover:bg-tarto-red hover:text-white"
-              >
+              <ButtonLink href="/cakes">Explore Our Gallery</ButtonLink>
+              <ButtonLink href="#bakers" variant="outline">
                 Meet the Bakers
-              </Link>
+              </ButtonLink>
             </div>
           </div>
 
@@ -228,7 +221,7 @@ export default function AboutPage() {
               </div>
             </article>
 
-            <article className="rounded-2xl bg-tarto-red p-6 text-white shadow-sm">
+            <article data-surface="dark" className="rounded-2xl bg-tarto-red p-6 text-white shadow-sm">
               <p className="text-tarto-yellow">◎</p>
               <h3 className="mt-2 text-xl font-bold">Ethical Sourcing</h3>
               <p className="mt-3 text-sm leading-relaxed text-white/85">

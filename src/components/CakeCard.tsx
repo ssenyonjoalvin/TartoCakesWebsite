@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatPrice } from "@/data/cakes";
 import StarRating from "@/components/StarRating";
+import { ButtonLink } from "@/components/ui/Button";
 
 type Props = {
   cake: {
@@ -21,7 +22,12 @@ export default function CakeCard({ cake }: Props) {
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-black/10 bg-white transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(214,40,40,0.12)]">
-      <Link href={`/cakes/${cake.slug}`} className="relative block aspect-[4/5] overflow-hidden">
+      <Link
+        href={`/cakes/${cake.slug}`}
+        tabIndex={-1}
+        aria-hidden
+        className="relative block aspect-[4/5] overflow-hidden"
+      >
         <Image
           src={cake.image}
           alt={cake.name}
@@ -38,15 +44,16 @@ export default function CakeCard({ cake }: Props) {
             <span>({reviewCount})</span>
           </div>
         ) : null}
-        <p className="mt-1 text-sm font-semibold text-tarto-red">
+        <p className="mb-4 mt-1 text-sm font-semibold text-tarto-red">
           {formatPrice(cake.price)}
         </p>
-        <Link
+        <ButtonLink
           href={`/cakes/${cake.slug}`}
-          className="mt-4 inline-flex items-center justify-center rounded-full bg-tarto-red px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-tarto-red/90"
+          aria-label={`View details for ${cake.name}`}
+          className="mt-auto"
         >
           View Details
-        </Link>
+        </ButtonLink>
       </div>
     </article>
   );

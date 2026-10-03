@@ -151,7 +151,7 @@ export default async function BlogPostPage({ params }: Props) {
                     />
                   </div>
                   <div className="p-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-orange">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-amber">
                       {item.category}
                     </p>
                     <h3 className="mt-2 text-lg font-bold leading-snug text-tarto-ink group-hover:text-tarto-red">

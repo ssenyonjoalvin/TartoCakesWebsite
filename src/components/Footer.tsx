@@ -2,6 +2,7 @@ import Link from "next/link";
 import Logo from "@/components/Logo";
 import CtaBanner from "@/components/CtaBanner";
 import SocialIcons from "@/components/SocialIcons";
+import { ButtonLink } from "@/components/ui/Button";
 import { contactInfo, formatPhone, phoneHref } from "@/data/contact";
 
 const quickLinks = [
@@ -17,7 +18,7 @@ export default function Footer() {
     <>
       <CtaBanner />
 
-      <footer className="bg-tarto-red text-white">
+      <footer data-surface="dark" className="bg-tarto-red text-white">
         <div className="site-container grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <Logo variant="footer" />
@@ -67,24 +68,14 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold">Newsletter</h3>
-            <p className="mt-3 text-sm text-white/85">
-              Get cake ideas, offers, and seasonal specials in your inbox.
+            <h3 className="text-lg font-semibold">Plan Your Cake</h3>
+            <p className="mt-3 text-sm leading-relaxed text-white/85">
+              Pick a design from our gallery, then tell us your date, size and
+              flavour. We will confirm the price and details with you.
             </p>
-            <form className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <input
-                type="email"
-                required
-                placeholder="Your email"
-                className="w-full rounded-md border-0 bg-white px-3 py-2.5 text-sm text-tarto-ink placeholder:text-tarto-ink/50 outline-none"
-              />
-              <button
-                type="submit"
-                className="rounded-md bg-tarto-yellow px-4 py-2.5 text-sm font-semibold text-tarto-ink transition hover:bg-tarto-orange"
-              >
-                Subscribe
-              </button>
-            </form>
+            <ButtonLink href="/cakes" variant="light" className="mt-5">
+              Browse Cakes
+            </ButtonLink>
           </div>
         </div>
         <div className="border-t border-white/15">

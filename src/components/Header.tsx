@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Logo from "@/components/Logo";
+import { ButtonLink } from "@/components/ui/Button";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -13,28 +14,39 @@ const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
+function isActive(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+}
+
 export default function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-tarto-red/10 bg-tarto-cream/95 backdrop-blur-sm">
       <div className="site-container flex items-center justify-between gap-4 py-3">
         <Logo variant="header" />
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav aria-label="Main" className="hidden items-center gap-8 md:flex">
           {navLinks.map((link) => {
-            const active =
-              link.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(link.href);
+            const active = isActive(pathname, link.href);
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative text-sm font-medium transition-colors ${
+                aria-current={active ? "page" : undefined}
+                className={`relative py-2 text-sm font-medium transition-colors ${
                   active
-                    ? "text-tarto-red after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-full after:bg-tarto-red"
+                    ? "text-tarto-red after:absolute after:bottom-0.5 after:left-0 after:h-0.5 after:w-full after:bg-tarto-red"
                     : "text-tarto-ink hover:text-tarto-red"
                 }`}
               >
@@ -45,39 +57,50 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link
-            href="/contact"
-            className="hidden rounded-full bg-tarto-red px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-tarto-red/90 sm:inline-flex"
-          >
+          <ButtonLink href="/contact" className="hidden shadow-sm sm:inline-flex">
             Request a Quote
-          </Link>
+          </ButtonLink>
           <button
             type="button"
-            aria-label="Toggle menu"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-tarto-red/20 text-tarto-ink md:hidden"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-tarto-red/20 text-tarto-ink md:hidden"
             onClick={() => setOpen((v) => !v)}
           >
-            <span className="text-xl">{open ? "✕" : "☰"}</span>
+            <svg
+              viewBox="0 0 24 24"
+              className="h-6 w-6 fill-none stroke-current stroke-2"
+              strokeLinecap="round"
+              aria-hidden
+            >
+              {open ? (
+                <path d="M6 6l12 12M18 6L6 18" />
+              ) : (
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              )}
+            </svg>
           </button>
         </div>
       </div>
 
       {open && (
-        <div className="border-t border-tarto-red/10 bg-tarto-cream px-4 py-4 md:hidden">
-          <nav className="flex flex-col gap-3">
+        <div
+          id="mobile-menu"
+          className="border-t border-tarto-red/10 bg-tarto-cream px-4 py-4 md:hidden"
+        >
+          <nav aria-label="Mobile" className="flex flex-col gap-1">
             {navLinks.map((link) => {
-              const active =
-                link.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(link.href);
+              const active = isActive(pathname, link.href);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
+                  aria-current={active ? "page" : undefined}
                   onClick={() => setOpen(false)}
-                  className={`rounded-md px-2 py-2 text-sm font-medium ${
+                  className={`flex min-h-11 items-center rounded-md px-3 text-base font-medium ${
                     active
-                      ? "text-tarto-red underline underline-offset-4"
+                      ? "bg-tarto-red/10 text-tarto-red"
                       : "text-tarto-ink hover:bg-tarto-yellow/30"
                   }`}
                 >
@@ -85,13 +108,14 @@ export default function Header() {
                 </Link>
               );
             })}
-            <Link
+            <ButtonLink
               href="/contact"
               onClick={() => setOpen(false)}
-              className="mt-1 rounded-md bg-tarto-red px-4 py-2.5 text-center text-sm font-semibold text-white"
+              fullWidth
+              className="mt-3"
             >
               Request a Quote
-            </Link>
+            </ButtonLink>
           </nav>
         </div>
       )}

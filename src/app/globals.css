@@ -8,6 +8,11 @@
   --tarto-yellow: #ffc107;
   --tarto-cream: #fff4e5;
   --tarto-ink: #1a1a1a;
+  /* Text-safe amber: the brand orange (#f6b21a) is only ~1.7:1 on cream,
+     so orange-coloured *text* uses this darker shade (5.8:1 on cream).
+     Keep --tarto-orange for fills, stars and decoration. */
+  --tarto-amber: #8a5300;
+  --focus-ring: var(--tarto-ink);
 }
 
 @theme inline {
@@ -18,6 +23,7 @@
   --color-tarto-yellow: var(--tarto-yellow);
   --color-tarto-cream: var(--tarto-cream);
   --color-tarto-ink: var(--tarto-ink);
+  --color-tarto-amber: var(--tarto-amber);
   --font-sans: var(--font-poppins);
   --font-display: var(--font-poppins);
   --font-brand: var(--font-brand-script);
@@ -33,6 +39,18 @@ body {
   font-family: var(--font-poppins), "Segoe UI", sans-serif;
   width: 100%;
   overflow-x: hidden;
+}
+
+/* Visible keyboard focus everywhere. :where() keeps specificity at zero so
+   component classes can still override it. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Sections with a red/dark background flip the ring to white. */
+[data-surface="dark"] {
+  --focus-ring: #fff;
 }
 
 /* Full-bleed content with edge padding — stretches to both sides of the screen */
@@ -91,4 +109,15 @@ body {
 
 .animate-float-soft {
   animation: float-soft 5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import CakeGallery from "@/components/CakeGallery";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { getActiveOccasions, getPublishedCakes } from "@/lib/public-cakes";
 
 export const metadata: Metadata = {
@@ -35,18 +36,12 @@ export default async function CakesPage() {
     <>
       <section className="bg-tarto-cream py-14">
         <div className="site-container">
-          <div className="text-center">
-            <p className="text-sm font-semibold tracking-[0.18em] text-tarto-orange">
-              CAKE GALLERY
-            </p>
-            <h1 className="mt-3 text-4xl font-bold text-tarto-ink sm:text-5xl">
-              Our Cakes
-            </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-tarto-ink/70">
-              Explore our collection and filter by occasion. Every cake can be
-              customised for your celebration.
-            </p>
-          </div>
+          <SectionHeading
+            as="h1"
+            eyebrow="Cake gallery"
+            title="Our Cakes"
+            description="Explore our collection and filter by occasion. Every cake can be customised for your celebration."
+          />
           <div className="mt-10">
             {cakes.length > 0 ? (
               <CakeGallery

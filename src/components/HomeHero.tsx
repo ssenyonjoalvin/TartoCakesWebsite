@@ -1,82 +1,92 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ButtonLink } from "@/components/ui/Button";
 
 const slides = [
   {
     src: "/images/chocolate-layered-cake.jpg",
     alt: "Chocolate layer drip cake with cherries",
-    position: "object-center",
   },
   {
     src: "/images/birthday-chocolate-cake.jpg",
     alt: "Birthday chocolate drip cake",
-    position: "object-center",
   },
   {
     src: "/images/chocolate-cake.jpg",
     alt: "Chocolate celebration cake",
-    position: "object-center",
   },
 ];
 
+const ROTATE_MS = 5000;
+
 export default function HomeHero() {
   const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
+    // Respect the OS "reduce motion" setting: no auto-rotation at all.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (paused) return;
+
     const id = window.setInterval(() => {
       setActive((current) => (current + 1) % slides.length);
-    }, 5000);
+    }, ROTATE_MS);
     return () => window.clearInterval(id);
-  }, []);
+  }, [paused]);
 
   return (
-    <section className="w-full overflow-hidden bg-tarto-cream">
+    <section
+      aria-label="Welcome"
+      className="w-full overflow-hidden bg-tarto-cream"
+    >
       <div className="grid w-full lg:grid-cols-[42%_58%]">
-        <div className="flex flex-col justify-center px-4 py-14 sm:px-6 lg:px-10 xl:px-14 lg:py-20">
+        <div className="flex flex-col justify-center px-4 py-12 sm:px-6 lg:px-10 lg:py-20 xl:px-14">
           <div className="animate-fade-up w-full max-w-lg">
-            <p className="text-xs font-semibold tracking-[0.18em] text-tarto-orange sm:text-[0.8rem]">
-              WELCOME TO TARTO CAKES
+            <p className="text-xs font-semibold tracking-[0.18em] text-tarto-amber sm:text-[0.8rem]">
+              CUSTOM CAKES IN KAMPALA
             </p>
-            <h1 className="mt-3 text-[1.85rem] font-bold leading-tight text-tarto-ink sm:text-3xl lg:text-[2.15rem]">
-              Great <span className="text-tarto-orange">Taste</span> in Every{" "}
-              <span className="text-tarto-orange">Bite</span>
+            <h1 className="mt-3 text-[2rem] font-bold leading-tight text-tarto-ink sm:text-4xl lg:text-[2.6rem]">
+              Great <span className="text-tarto-red">Taste</span> in Every{" "}
+              <span className="text-tarto-red">Bite</span>
             </h1>
-            <p className="mt-3 max-w-sm text-sm leading-relaxed text-tarto-ink/70 sm:text-[0.95rem]">
-              Delicious, beautiful and memorable cakes for every celebration.
-              Made with love, just for you.
+            <p className="mt-4 max-w-md text-[0.95rem] leading-relaxed text-tarto-ink/75 sm:text-base">
+              Birthday, wedding and celebration cakes made to order. Choose a
+              design from our gallery or share your own idea, and we will
+              confirm the price and details with you.
             </p>
-            <div className="mt-6 flex flex-wrap gap-2.5">
-              <Link
-                href="/cakes"
-                className="rounded-full bg-tarto-red px-5 py-2.5 text-sm font-bold text-white transition hover:bg-tarto-red/90"
-              >
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <ButtonLink href="/cakes" size="lg">
                 View Our Cakes
-              </Link>
-              <Link
-                href="/contact"
-                className="rounded-full bg-tarto-yellow px-5 py-2.5 text-sm font-bold text-tarto-ink transition hover:bg-tarto-orange"
+              </ButtonLink>
+              <ButtonLink
+                href={`/contact?cake=${encodeURIComponent("Custom Cake")}`}
+                variant="secondary"
+                size="lg"
               >
-                Request a Quote
-              </Link>
+                Create Your Cake
+              </ButtonLink>
             </div>
           </div>
         </div>
 
-        <div className="relative min-h-[380px] w-full bg-[#f0e2c8] sm:min-h-[460px] lg:min-h-[560px]">
+        <div
+          className="relative min-h-[320px] w-full bg-[#f0e2c8] sm:min-h-[460px] lg:min-h-[560px]"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
           {slides.map((slide, index) => (
             <Image
               key={slide.src}
               src={slide.src}
-              alt={slide.alt}
+              alt={index === active ? slide.alt : ""}
+              aria-hidden={index !== active}
               fill
               priority={index === 0}
-              loading={index === 0 ? undefined : "eager"}
-              quality={95}
+              quality={85}
               sizes="(max-width: 1024px) 100vw, 58vw"
-              className={`object-cover transition-opacity duration-700 ${slide.position} ${
+              className={`object-cover object-center transition-opacity duration-700 ${
                 index === active ? "opacity-100" : "opacity-0"
               }`}
             />
@@ -85,21 +95,28 @@ export default function HomeHero() {
         </div>
       </div>
 
-      <div className="flex w-full items-center justify-center gap-2 pb-5 pt-1">
+      <div
+        className="flex w-full items-center justify-center gap-1 pb-3"
+        onFocus={() => setPaused(true)}
+        onBlur={() => setPaused(false)}
+      >
         {slides.map((slide, index) => (
           <button
             key={slide.src}
             type="button"
-            aria-label={`Show slide ${index + 1}`}
+            aria-label={`Show photo ${index + 1} of ${slides.length}`}
+            aria-current={index === active ? "true" : undefined}
             onClick={() => setActive(index)}
-            className={`h-2 w-2 rounded-full transition ${
-              index === active
-                ? "bg-tarto-red"
-                : index === 1
-                  ? "bg-tarto-orange"
-                  : "bg-tarto-yellow"
-            }`}
-          />
+            className="flex h-11 w-11 items-center justify-center rounded-full"
+          >
+            <span
+              className={`block rounded-full transition-all ${
+                index === active
+                  ? "h-2.5 w-6 bg-tarto-red"
+                  : "h-2.5 w-2.5 bg-tarto-ink/25"
+              }`}
+            />
+          </button>
         ))}
       </div>
     </section>

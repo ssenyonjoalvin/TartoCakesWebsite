@@ -66,8 +66,9 @@ export default function CakeOrderOptions({ cake }: Props) {
               <button
                 key={option}
                 type="button"
+                aria-pressed={size === option}
                 onClick={() => setSize(option)}
-                className={`min-w-[3.25rem] rounded-lg border px-3.5 py-2.5 text-sm font-semibold transition ${
+                className={`min-h-11 min-w-[3.25rem] rounded-lg border px-3.5 py-2.5 text-sm font-semibold transition ${
                   size === option
                     ? "border-tarto-red bg-tarto-red text-white"
                     : "border-tarto-ink/15 bg-white text-tarto-ink hover:border-tarto-red/40"
@@ -92,8 +93,9 @@ export default function CakeOrderOptions({ cake }: Props) {
               <button
                 key={option}
                 type="button"
+                aria-pressed={flavor === option}
                 onClick={() => setFlavor(option)}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                className={`min-h-11 rounded-full px-4 py-2 text-sm font-medium transition ${
                   flavor === option
                     ? "bg-tarto-red text-white"
                     : "bg-tarto-ink/8 text-tarto-ink hover:bg-tarto-ink/12"

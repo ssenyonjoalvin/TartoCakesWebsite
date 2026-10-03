@@ -6,6 +6,7 @@ import SocialIcons from "@/components/SocialIcons";
 import { contactInfo, formatPhone, phoneHref } from "@/data/contact";
 import { getPublishedCakes } from "@/lib/public-cakes";
 import { prisma } from "@/lib/prisma";
+import { getSiteSettings } from "@/lib/site-settings";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -58,13 +59,15 @@ async function getFlavorOptions() {
 }
 
 export default async function ContactPage() {
-  const [cakeOptions, occasionOptions, sizeOptions, flavorOptions] =
+  const [cakeOptions, occasionOptions, sizeOptions, flavorOptions, settings] =
     await Promise.all([
       getCakeOptions(),
       getOccasionOptions(),
       getSizeOptions(),
       getFlavorOptions(),
+      getSiteSettings(),
     ]);
+  const { openingHours } = settings.business;
 
   return (
     <>
@@ -140,6 +143,20 @@ export default async function ContactPage() {
                       <p>{contactInfo.city}</p>
                     </div>
                   </li>
+                  {openingHours ? (
+                    <li className="flex gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-tarto-yellow/50 text-tarto-red">
+                        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-2" aria-hidden>
+                          <circle cx="12" cy="12" r="9" />
+                          <path d="M12 7v5l3.5 2" strokeLinecap="round" />
+                        </svg>
+                      </span>
+                      <div>
+                        <p className="font-semibold text-tarto-ink">Opening hours</p>
+                        <p className="whitespace-pre-line">{openingHours}</p>
+                      </div>
+                    </li>
+                  ) : null}
                 </ul>
 
                 <div className="mt-6">

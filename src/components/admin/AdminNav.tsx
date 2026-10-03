@@ -92,6 +92,8 @@ const nav: NavItem[] = [
 const settingsChildren: { href: string; label: string; adminOnly?: boolean }[] = [
   { href: "/admin/profile", label: "My Profile" },
   { href: "/admin/settings/whatsapp", label: "WhatsApp Ordering", adminOnly: true },
+  { href: "/admin/settings/business", label: "Business & Delivery" },
+  { href: "/admin/settings/faq", label: "FAQ" },
   { href: "/admin/settings/flavors", label: "Cake Flavors" },
   { href: "/admin/settings/sizes", label: "Cake Sizes" },
   { href: "/admin/settings/occasions", label: "Occasions" },

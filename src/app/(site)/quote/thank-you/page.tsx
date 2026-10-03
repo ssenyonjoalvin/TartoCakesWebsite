@@ -59,7 +59,7 @@ function formatDate(date: Date) {
 
 export default async function QuoteThankYouPage({ searchParams }: Props) {
   const { id } = await searchParams;
-  const [order, { whatsappNumber }] = await Promise.all([
+  const [order, { whatsappNumber, business }] = await Promise.all([
     getQuoteSummary(id),
     getSiteSettings(),
   ]);
@@ -120,6 +120,9 @@ export default async function QuoteThankYouPage({ searchParams }: Props) {
           <p className="mt-3 text-tarto-ink/75">
             We&apos;ve received your cake request. Our team will contact you to
             confirm the details and price before anything is baked.
+            {business.quoteResponseTime
+              ? ` We usually reply ${business.quoteResponseTime.replace(/\.$/, "")}.`
+              : ""}
           </p>
           {reference ? (
             <p className="mt-4 inline-flex rounded-full bg-white px-4 py-2 text-sm text-tarto-ink shadow-sm">

@@ -4,6 +4,11 @@ import CtaBanner from "@/components/CtaBanner";
 import SocialIcons from "@/components/SocialIcons";
 import { ButtonLink } from "@/components/ui/Button";
 import { contactInfo, formatPhone, phoneHref } from "@/data/contact";
+import {
+  getSiteSettings,
+  hasDeliveryInfo,
+  publicFaq,
+} from "@/lib/site-settings";
 
 const quickLinks = [
   { href: "/", label: "Home" },
@@ -14,7 +19,17 @@ const quickLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
-export default function Footer() {
+export default async function Footer() {
+  const settings = await getSiteSettings();
+  // Only link to info pages once the owner has filled them in (Admin → Settings).
+  const links = [
+    ...quickLinks,
+    ...(hasDeliveryInfo(settings.business)
+      ? [{ href: "/delivery", label: "Delivery & Pickup" }]
+      : []),
+    ...(publicFaq(settings).length > 0 ? [{ href: "/faq", label: "FAQ" }] : []),
+  ];
+
   return (
     <>
       <CtaBanner />
@@ -35,7 +50,7 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold">Quick Links</h3>
             <ul className="mt-4 space-y-2 text-sm text-white/85">
-              {quickLinks.map((link) => (
+              {links.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="hover:text-tarto-yellow">
                     {link.label}
@@ -65,6 +80,11 @@ export default function Footer() {
                 <br />
                 {contactInfo.city}
               </li>
+              {settings.business.openingHours ? (
+                <li className="whitespace-pre-line">
+                  {settings.business.openingHours}
+                </li>
+              ) : null}
             </ul>
           </div>
 

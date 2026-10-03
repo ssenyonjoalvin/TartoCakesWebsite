@@ -25,6 +25,7 @@ export default function StarRating({
   return (
     <span
       className={`inline-flex items-center gap-0.5 text-tarto-orange ${className}`}
+      role="img"
       aria-label={label}
     >
       {[1, 2, 3, 4, 5].map((star) => {

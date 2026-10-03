@@ -1,9 +1,14 @@
 import CakeCard from "@/components/CakeCard";
 import HomeHero from "@/components/HomeHero";
+import FaqList from "@/components/FaqList";
+import HowItWorks from "@/components/HowItWorks";
 import OccasionGrid from "@/components/OccasionGrid";
+import ReviewHighlights from "@/components/ReviewHighlights";
 import { ButtonLink } from "@/components/ui/Button";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { getOccasionShowcase, getPublishedCakes } from "@/lib/public-cakes";
+import { getApprovedReviews } from "@/lib/reviews";
+import { getSiteSettings, publicFaq } from "@/lib/site-settings";
 
 const features = [
   {
@@ -86,10 +91,13 @@ const features = [
 ];
 
 export default async function HomePage() {
-  const [published, occasions] = await Promise.all([
+  const [published, occasions, reviews, settings] = await Promise.all([
     getPublishedCakes(),
     getOccasionShowcase(),
+    getApprovedReviews(3),
+    getSiteSettings(),
   ]);
+  const faqPreview = publicFaq(settings).slice(0, 4);
   const featured = published.filter((cake) => cake.featured);
   const bestsellers = (featured.length > 0 ? featured : published).slice(0, 4);
 
@@ -150,6 +158,26 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <HowItWorks />
+
+      {reviews.length > 0 ? <ReviewHighlights reviews={reviews} /> : null}
+
+      {faqPreview.length > 0 ? (
+        <section className="bg-white py-14 sm:py-16">
+          <div className="site-container mx-auto max-w-3xl">
+            <SectionHeading eyebrow="Questions" title="Good to know" />
+            <div className="mt-10">
+              <FaqList items={faqPreview} />
+            </div>
+            <div className="mt-8 flex justify-center">
+              <ButtonLink href="/faq" variant="outline">
+                See all questions
+              </ButtonLink>
+            </div>
+          </div>
+        </section>
+      ) : null}
     </>
   );
 }

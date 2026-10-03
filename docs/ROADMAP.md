@@ -521,8 +521,35 @@ Please answer each item, or mark it "don't show".
 - Valid submit with design + delivery + 1 photo → 303 to `/quote/thank-you?id=…`. The order row has `design`, `deliveryMethod`, `deliveryLocation`, and the photo uploaded to Cloudinary (`tarto/quotes/`).
 - Confirmation page shows reference, summary and "1 attached", contains no email or phone, and is `noindex`. An unknown id shows a generic thank-you.
 - Rate limit: the 6th counted request within 10 minutes → "You've sent several requests…".
-- Test data left in the DB: 2 orders + 1 customer with email `e2e-test@example.com` (name "TEST Claude E2E (delete me)") and 1 Cloudinary image.
+- Test data (2 orders, 1 customer, 1 Cloudinary image) was deleted afterwards on 2026-10-03.
 
 **Assumptions / owner questions added**
 - Email is still required on quote requests (the customer record is keyed by email). Many local customers prefer phone only. Ask the owner whether phone-only requests should be allowed (needs a small model change).
 - No quantity field. Custom cakes are ordered one at a time. Add one if the owner sells multiples (e.g. cupcakes).
+
+### Phase 4 — Trust (2026-10-03) ✅ (uncommitted)
+
+**Decisions**
+- Business facts are **managed in admin**, not in code, so the owner can update policies without a developer.
+- Unverified claims (TRUST-001: "1,000+ Smiles Delivered", named bakers, "100% Satisfaction", "24h Lead Time", "Ethical Sourcing") are **kept for now at the developer's request**, pending owner confirmation (§8 Q13–16). Still a launch blocker in the backlog.
+
+**Changed**
+- **Admin → Settings → Business & Delivery** (`/admin/settings/business`, Admin + Editor): opening hours, payment methods, order notice, same-day orders, quote response time, delivery areas, delivery fees, pickup. Stored as JSON in `SiteSetting` (`business.info`).
+- **Admin → Settings → FAQ** (`/admin/settings/faq`, Admin + Editor): add, edit, reorder, show/hide and remove. One-click starters for the common questions from the brief, with **answers always written by the owner**. Stored as JSON in `SiteSetting` (`faq.items`), so **no schema change** was needed.
+- Types and field metadata live in `src/lib/business-fields.ts` (client-safe). Loading and saving is in `src/lib/site-settings.ts` (server).
+- **`/delivery` (DEL-001):** one card per filled-in fact, a fallback message plus contact options when empty, and `noindex` until there's content.
+- **`/faq` (FAQ-001):** native `<details>` accordion, `FAQPage` JSON-LD, and `noindex` while empty.
+- Footer shows "Delivery & Pickup" / "FAQ" links and opening hours **only once filled in**. Contact page shows opening hours, and the quote confirmation shows the response time when set.
+- **Homepage (HOME-001):** How It Works (5 process steps, no timing or fee promises), "What our customers say" (latest 3 **approved** reviews, hidden if none), FAQ preview (first 4, hidden if none). The site-wide closing banner now reads "Have a cake in mind? Let's create it." → Design Your Cake.
+- `StarRating` gets `role="img"` so its rating label is actually announced.
+- New shared `ContactOptions` block (WhatsApp if configured, call, quote).
+
+**Tests performed**
+- `tsc` passes. No new lint errors.
+- Visibility rules (`publicFaq`, `hasDeliveryInfo`): 6 assertions pass.
+- Dev server: `/`, `/faq`, `/delivery`, `/contact`, `/design-your-cake` → 200. Empty FAQ/delivery pages show fallbacks and `noindex`, and footer links stay hidden. Homepage renders real approved reviews. Admin settings pages redirect to login when signed out.
+- Not tested: saving in the new admin pages (needs an admin login).
+
+**Not done**
+- ABOUT-001 (rebuild About from confirmed story) waits for owner content. The About page is unchanged.
+- GAL-001 (separate gallery) is still deferred until the owner confirms which photos are their own.

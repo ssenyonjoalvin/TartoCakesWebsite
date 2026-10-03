@@ -7,9 +7,9 @@ type Props = {
 };
 
 export default function CtaBanner({
-  title = "Ready to make your celebration unforgettable? Let us bake your next happy moment.",
-  buttonLabel = "Request a Quote",
-  href = "/contact",
+  title = "Have a cake in mind? Let's create it.",
+  buttonLabel = "Design Your Cake",
+  href = "/design-your-cake",
 }: Props) {
   return (
     <section data-surface="dark" className="bg-tarto-red">

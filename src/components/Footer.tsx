@@ -8,6 +8,7 @@ import { contactInfo, formatPhone, phoneHref } from "@/data/contact";
 const quickLinks = [
   { href: "/", label: "Home" },
   { href: "/cakes", label: "Cakes" },
+  { href: "/design-your-cake", label: "Design Your Cake" },
   { href: "/about", label: "About Us" },
   { href: "/blog", label: "Blog" },
   { href: "/contact", label: "Contact" },

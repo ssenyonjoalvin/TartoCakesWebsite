@@ -1,11 +1,17 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import WhatsAppFloat from "@/components/WhatsAppFloat";
+import { getSiteSettings } from "@/lib/site-settings";
 
-export default function SiteLayout({
+export default async function SiteLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // getSiteSettings never throws, so a DB outage can't take down the layout
+  // (and with it the error page that tells customers to call us).
+  const { whatsappNumber } = await getSiteSettings();
+
   return (
     <div className="flex min-h-full w-full flex-col">
       <a
@@ -19,6 +25,7 @@ export default function SiteLayout({
         {children}
       </main>
       <Footer />
+      <WhatsAppFloat number={whatsappNumber} />
     </div>
   );
 }

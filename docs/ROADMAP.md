@@ -495,3 +495,34 @@ Please answer each item, or mark it "don't show".
 - **Price-range filter skipped:** with ~15 cakes, price sorting covers the need. Revisit past ~40 cakes.
 - **Separate gallery (GAL-001) deferred:** it would duplicate the catalog. It's better built in Phase 4 once the owner confirms which photos are Tarto's own work (some may be stock images, see §8).
 - Still no visual pass at each breakpoint (320–1440px).
+
+### Phase 3 — Ordering (2026-10-03) ✅
+
+**Changed**
+- **WhatsApp number managed in admin (ORD-001):** new page **Admin → Settings → WhatsApp Ordering** (`/admin/settings/whatsapp`), **Admin role only** (editors can't redirect orders). Stored in the existing `SiteSetting` table (`whatsapp.number`) through `src/lib/site-settings.ts`. Accepts `0700 796 794`, `+256…`, `00256…` and saves the digits-only wa.me format. Live preview of the saved format plus a "Test saved number in WhatsApp" link. Blank = every WhatsApp button hidden. Saving revalidates all public pages.
+- **WhatsApp buttons:** floating button on public pages (hidden on the builder and confirmation pages), "Order on WhatsApp" on cake pages (cake, chosen size and flavour, listed price marked "to be confirmed"), "Send via WhatsApp instead" in the builder, and "Continue on WhatsApp" on the confirmation page (includes the reference). Messages come from `buildWhatsAppOrderMessage` in `src/lib/whatsapp.ts`, and empty fields are left out.
+- **Design Your Cake (ORD-002):** `/design-your-cake` has 8 steps: occasion → size → flavour → design (free text) → message → photos (≤3) → date, pickup/delivery and contact → review with Edit links. Options come from the DB (Admin → Settings). "Not sure yet" is allowed for size and flavour. Decorations are free text because no decoration list has been confirmed. Native radio cards (arrow keys work), focus moves to each step's heading, a sticky Back/Continue bar on phones, and "Skip" on optional steps. Submits through the same `submitQuoteRequest` action. Server errors send the customer back to the right step.
+- **Confirmation page (ORD-003):** `/quote/thank-you?id=…` shows the reference (`INQ-XXXX`, the same code staff see in admin), a summary (no contact details), next steps and the WhatsApp follow-up. `noindex`.
+- **Field-level errors (FORM-001):** the action returns `fieldErrors` for every field at once. Inputs get `aria-invalid` and `aria-describedby`, and focus moves to the first error. The contact form no longer clears itself (or loses photos) on a validation error.
+- **Spam protection (SEC-001):** honeypot field on both forms (bots are silently "thanked") plus 5 requests per 10 min per IP (in-memory, per server instance; see `src/lib/rate-limit.ts`).
+- **Schema:** `CakeOrder.design`, `deliveryMethod`, `deliveryLocation` (all optional). Shown in the admin order dialog and CSV export.
+- Header: "Design Your Cake" link. The desktop menu now starts at `lg` (1024px) so 6 links fit. Hero "Create Your Cake" and the catalog empty state link to the builder.
+
+**Tests performed**
+- `tsc` passes. No new lint errors.
+- 18 assertions on `src/lib/whatsapp.ts` (number normalisation incl. invalid input, display format, message building, URL encoding, reference code) all pass.
+- Dev server: `/design-your-cake`, `/cakes/red-velvet`, `/`, `/contact` → 200. WhatsApp buttons correctly absent with no number set. `/admin/settings/whatsapp` signed out → redirects to login.
+
+**Database change applied** (2026-10-03, via `prisma/setup.ts`). Afterwards `prisma migrate diff` reports an empty migration.
+
+**End-to-end tests** (real HTTP form posts against the dev server, as a browser without JS would send them)
+- Invalid submit → 200, all 7 invalid fields returned with their own message and `aria-invalid`.
+- Honeypot filled → 303 to `/quote/thank-you`, nothing saved.
+- Valid submit with design + delivery + 1 photo → 303 to `/quote/thank-you?id=…`. The order row has `design`, `deliveryMethod`, `deliveryLocation`, and the photo uploaded to Cloudinary (`tarto/quotes/`).
+- Confirmation page shows reference, summary and "1 attached", contains no email or phone, and is `noindex`. An unknown id shows a generic thank-you.
+- Rate limit: the 6th counted request within 10 minutes → "You've sent several requests…".
+- Test data left in the DB: 2 orders + 1 customer with email `e2e-test@example.com` (name "TEST Claude E2E (delete me)") and 1 Cloudinary image.
+
+**Assumptions / owner questions added**
+- Email is still required on quote requests (the customer record is keyed by email). Many local customers prefer phone only. Ask the owner whether phone-only requests should be allowed (needs a small model change).
+- No quantity field. Custom cakes are ordered one at a time. Add one if the owner sells multiples (e.g. cupcakes).

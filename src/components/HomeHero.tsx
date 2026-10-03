@@ -61,7 +61,7 @@ export default function HomeHero() {
                 View Our Cakes
               </ButtonLink>
               <ButtonLink
-                href={`/contact?cake=${encodeURIComponent("Custom Cake")}`}
+                href="/design-your-cake"
                 variant="secondary"
                 size="lg"
               >

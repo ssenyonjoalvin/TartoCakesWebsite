@@ -2,10 +2,16 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
+import { buttonClasses } from "@/components/ui/Button";
 import { Cake } from "@/data/cakes";
+import { formatCakePrice } from "@/lib/pricing";
+import { buildWhatsAppOrderMessage, whatsAppLink } from "@/lib/whatsapp";
 
 type Props = {
   cake: Cake;
+  /** Admin-configured; "" hides the WhatsApp button. */
+  whatsappNumber: string;
 };
 
 const highlights = [
@@ -48,7 +54,7 @@ const highlights = [
   },
 ];
 
-export default function CakeOrderOptions({ cake }: Props) {
+export default function CakeOrderOptions({ cake, whatsappNumber }: Props) {
   const [size, setSize] = useState(cake.sizes[0] ?? "");
   const [flavor, setFlavor] = useState(cake.flavors[0] ?? "");
 
@@ -122,17 +128,42 @@ export default function CakeOrderOptions({ cake }: Props) {
         </div>
       </div>
 
-      <Link
-        href={`/contact?cake=${encodeURIComponent(cake.name)}&size=${encodeURIComponent(size)}&flavor=${encodeURIComponent(flavor)}`}
-        className="mt-7 inline-flex w-full items-center justify-center gap-2.5 rounded-xl bg-tarto-red px-6 py-3.5 text-sm font-bold text-white transition hover:bg-tarto-red/90 sm:w-auto sm:min-w-[240px]"
-      >
-        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-[1.8]" aria-hidden>
-          <path d="M4 6h2l2.2 10h9.3l2-7H8" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="10" cy="19" r="1.3" fill="currentColor" stroke="none" />
-          <circle cx="17" cy="19" r="1.3" fill="currentColor" stroke="none" />
-        </svg>
-        Request This Cake
-      </Link>
+      <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+        <Link
+          href={`/contact?cake=${encodeURIComponent(cake.name)}&size=${encodeURIComponent(size)}&flavor=${encodeURIComponent(flavor)}`}
+          className={buttonClasses({ size: "lg", className: "sm:min-w-[220px]" })}
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-[1.8]" aria-hidden>
+            <path d="M4 6h2l2.2 10h9.3l2-7H8" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="10" cy="19" r="1.3" fill="currentColor" stroke="none" />
+            <circle cx="17" cy="19" r="1.3" fill="currentColor" stroke="none" />
+          </svg>
+          Request This Cake
+        </Link>
+        {whatsappNumber ? (
+          <a
+            href={whatsAppLink(
+              whatsappNumber,
+              buildWhatsAppOrderMessage({
+                cake: cake.name,
+                size,
+                flavor,
+                listedPrice: formatCakePrice(cake),
+              })
+            )}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonClasses({
+              variant: "whatsapp",
+              size: "lg",
+              className: "sm:min-w-[220px]",
+            })}
+          >
+            <WhatsAppIcon />
+            Order on WhatsApp
+          </a>
+        ) : null}
+      </div>
     </div>
   );
 }

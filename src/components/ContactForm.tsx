@@ -1,15 +1,23 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import {
   submitQuoteRequest,
   type QuoteFormState,
 } from "@/app/(site)/contact/actions";
+import { Button } from "@/components/ui/Button";
+import { FieldError, errorProps, focusFirstError } from "@/components/ui/FieldError";
+import { CUSTOM_CAKE, HONEYPOT_FIELD, OTHER_OCCASION } from "@/lib/quote-form";
 
 const initialState: QuoteFormState = {};
-const OTHER_OCCASION = "__other__";
-const CUSTOM_CAKE = "Custom Cake";
 const MAX_REFERENCE_IMAGES = 3;
 const MAX_REFERENCE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_REFERENCE_TYPES = new Set([
@@ -18,6 +26,21 @@ const ALLOWED_REFERENCE_TYPES = new Set([
   "image/webp",
   "image/gif",
 ]);
+
+// Visual order of fields, used to focus the first error after a failed submit.
+const FIELD_ORDER = [
+  "name",
+  "email",
+  "phone",
+  "occasionId",
+  "eventDate",
+  "occasionOther",
+  "size",
+  "flavor",
+  "message",
+  "referenceImages",
+  "notes",
+] as const;
 
 const fieldClass =
   "mt-1.5 min-h-11 w-full rounded-md border border-tarto-ink/15 bg-tarto-cream px-3 py-2.5 text-base outline-none focus:border-tarto-red focus:ring-2 focus:ring-tarto-red/25 sm:text-sm";
@@ -60,6 +83,11 @@ export default function ContactForm({
   const [referencePreviews, setReferencePreviews] = useState<string[]>([]);
   const [referenceError, setReferenceError] = useState<string | undefined>();
   const referenceInputRef = useRef<HTMLInputElement>(null);
+  const errors = state.fieldErrors ?? {};
+
+  useEffect(() => {
+    focusFirstError(FIELD_ORDER, state.fieldErrors);
+  }, [state.fieldErrors]);
 
   useEffect(() => {
     const urls = referenceFiles.map((file) => URL.createObjectURL(file));
@@ -149,25 +177,38 @@ export default function ContactForm({
     setReferenceError(undefined);
   }
 
-  if (state.success) {
-    return (
-      <div className="mt-8 rounded-xl bg-tarto-cream p-6 text-center">
-        <p className="text-lg font-bold text-tarto-red">Thank you!</p>
-        <p className="mt-2 text-sm text-tarto-ink/75">
-          Your inquiry has been received. We will contact you soon to confirm
-          details and pricing.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <form action={formAction} className="mt-6 space-y-4">
+    <form
+      action={formAction}
+      noValidate
+      onSubmit={(event) => {
+        // Submitting manually (instead of letting <form action> do it) stops
+        // React 19 from resetting the form, so a validation error doesn't
+        // wipe what the customer typed or the photos they attached.
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        startTransition(() => formAction(formData));
+      }}
+      className="mt-6 space-y-4"
+    >
+      {/* Honeypot: hidden from people and screen readers, filled by bots. */}
+      <div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
+        <label htmlFor={HONEYPOT_FIELD}>Leave this empty</label>
+        <input id={HONEYPOT_FIELD} name={HONEYPOT_FIELD} tabIndex={-1} autoComplete="off" />
+      </div>
       <div>
         <label htmlFor="name" className="text-sm font-semibold text-tarto-ink">
           Name
         </label>
-        <input id="name" name="name" required className={fieldClass} />
+        <input
+          id="name"
+          name="name"
+          autoComplete="name"
+          required
+          className={fieldClass}
+          {...errorProps("name", errors.name)}
+        />
+        <FieldError id="name" message={errors.name} />
       </div>
       <div>
         <label htmlFor="email" className="text-sm font-semibold text-tarto-ink">
@@ -177,9 +218,12 @@ export default function ContactForm({
           id="email"
           name="email"
           type="email"
+          autoComplete="email"
           required
           className={fieldClass}
+          {...errorProps("email", errors.email)}
         />
+        <FieldError id="email" message={errors.email} />
       </div>
       <div>
         <label htmlFor="phone" className="text-sm font-semibold text-tarto-ink">
@@ -189,9 +233,12 @@ export default function ContactForm({
           id="phone"
           name="phone"
           type="tel"
+          autoComplete="tel"
           required
           className={fieldClass}
+          {...errorProps("phone", errors.phone)}
         />
+        <FieldError id="phone" message={errors.phone} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -205,6 +252,7 @@ export default function ContactForm({
             value={selectedOccasion}
             onChange={(event) => setOccasionChoice(event.target.value)}
             className={fieldClass}
+            {...errorProps("occasionId", errors.occasionId)}
           >
             <option value="">Select occasion...</option>
             {occasions.map((item) => (
@@ -214,6 +262,7 @@ export default function ContactForm({
             ))}
             <option value={OTHER_OCCASION}>Other (please specify)</option>
           </select>
+          <FieldError id="occasionId" message={errors.occasionId} />
         </div>
         <div>
           <label htmlFor="eventDate" className="text-sm font-semibold text-tarto-ink">
@@ -226,10 +275,12 @@ export default function ContactForm({
             required
             min={new Date().toISOString().slice(0, 10)}
             className={fieldClass}
+            {...errorProps("eventDate", errors.eventDate, "eventDate-help")}
           />
-          <p className="mt-1 text-xs text-tarto-ink/55">
+          <p id="eventDate-help" className="mt-1 text-xs text-tarto-ink/70">
             Event date, or the day you want the cake ready.
           </p>
+          <FieldError id="eventDate" message={errors.eventDate} />
         </div>
       </div>
       {showOther ? (
@@ -247,7 +298,9 @@ export default function ContactForm({
             maxLength={120}
             placeholder="e.g. Graduation, Baby shower, Corporate launch..."
             className={fieldClass}
+            {...errorProps("occasionOther", errors.occasionOther)}
           />
+          <FieldError id="occasionOther" message={errors.occasionOther} />
         </div>
       ) : null}
       <div>
@@ -280,6 +333,7 @@ export default function ContactForm({
             required
             defaultValue={presetSize}
             className={fieldClass}
+            {...errorProps("size", errors.size)}
           >
             <option value="">Select size...</option>
             {sizeOptions.map((name) => (
@@ -288,6 +342,7 @@ export default function ContactForm({
               </option>
             ))}
           </select>
+          <FieldError id="size" message={errors.size} />
         </div>
         <div>
           <label htmlFor="flavor" className="text-sm font-semibold text-tarto-ink">
@@ -299,6 +354,7 @@ export default function ContactForm({
             required
             defaultValue={presetFlavor}
             className={fieldClass}
+            {...errorProps("flavor", errors.flavor)}
           >
             <option value="">Select flavour...</option>
             {flavorOptions.map((name) => (
@@ -307,6 +363,7 @@ export default function ContactForm({
               </option>
             ))}
           </select>
+          <FieldError id="flavor" message={errors.flavor} />
         </div>
       </div>
       <div>
@@ -320,28 +377,31 @@ export default function ContactForm({
           maxLength={120}
           placeholder="e.g. Happy Birthday Sarah"
           className={fieldClass}
+          {...errorProps("message", errors.message, "message-help")}
         />
-        <p className="mt-1 text-xs text-tarto-ink/55">
+        <p id="message-help" className="mt-1 text-xs text-tarto-ink/70">
           The inscription you want written on the cake. Leave blank if none.
         </p>
+        <FieldError id="message" message={errors.message} />
       </div>
 
       <div>
         <p className="text-sm font-semibold text-tarto-ink">
           Cake photo{" "}
-          <span className="font-normal text-tarto-ink/50">(optional)</span>
+          <span className="font-normal text-tarto-ink/60">(optional)</span>
         </p>
-        <p className="mt-1 text-xs text-tarto-ink/55">
+        <p id="referenceImages-help" className="mt-1 text-xs text-tarto-ink/70">
           Have a picture of the cake you want? Attach it so we can match the
           design. Up to {MAX_REFERENCE_IMAGES} photos, 5MB each.
         </p>
         <input
           ref={referenceInputRef}
-          id="referenceImages"
+          id="referenceImages-input"
           name="referenceImages"
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif"
           multiple
+          tabIndex={-1}
           className="sr-only"
           onChange={(event) => {
             addReferenceFiles(event.target.files ?? []);
@@ -349,9 +409,15 @@ export default function ContactForm({
           }}
         />
         <button
+          id="referenceImages"
           type="button"
           onClick={() => referenceInputRef.current?.click()}
           className="mt-2.5 inline-flex min-h-36 w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-tarto-ink/20 bg-tarto-cream px-3 py-8 text-sm font-semibold text-tarto-ink transition hover:border-tarto-red/40 hover:bg-white"
+          {...errorProps(
+            "referenceImages",
+            errors.referenceImages,
+            "referenceImages-help"
+          )}
         >
           <svg
             viewBox="0 0 24 24"
@@ -392,16 +458,17 @@ export default function ContactForm({
           </div>
         ) : null}
         {referenceError ? (
-          <p className="mt-1.5 text-xs font-medium text-tarto-red" role="alert">
+          <p className="mt-1.5 text-sm font-medium text-tarto-red" role="alert">
             {referenceError}
           </p>
         ) : null}
+        <FieldError id="referenceImages" message={errors.referenceImages} />
       </div>
 
       <div>
         <label htmlFor="notes" className="text-sm font-semibold text-tarto-ink">
           Comments for the team{" "}
-          <span className="font-normal text-tarto-ink/50">(optional)</span>
+          <span className="font-normal text-tarto-ink/60">(optional)</span>
         </label>
         <textarea
           id="notes"
@@ -410,10 +477,12 @@ export default function ContactForm({
           maxLength={1000}
           placeholder="Allergies, delivery notes, colour preferences, or anything else we should know..."
           className={fieldClass}
+          {...errorProps("notes", errors.notes, "notes-help")}
         />
-        <p className="mt-1 text-xs text-tarto-ink/55">
+        <p id="notes-help" className="mt-1 text-xs text-tarto-ink/70">
           Share extra details, questions, or special requests. Leave blank if none.
         </p>
+        <FieldError id="notes" message={errors.notes} />
       </div>
 
       {state.error ? (
@@ -422,13 +491,9 @@ export default function ContactForm({
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-md bg-tarto-red px-6 py-3 text-sm font-bold text-white transition hover:bg-tarto-red/90 disabled:opacity-70"
-      >
+      <Button type="submit" disabled={pending} fullWidth size="lg">
         {pending ? "Sending..." : "Send Request"}
-      </button>
+      </Button>
     </form>
   );
 }

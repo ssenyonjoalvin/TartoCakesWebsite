@@ -9,6 +9,7 @@ import {
 } from "@/lib/public-cakes";
 import CakeImageGallery from "@/components/CakeImageGallery";
 import { formatCakePrice, showsStartingPrice } from "@/lib/pricing";
+import { getSiteSettings } from "@/lib/site-settings";
 import CakeReviews from "@/components/CakeReviews";
 import StarRating from "@/components/StarRating";
 import {
@@ -38,7 +39,10 @@ export default async function CakeDetailPage({ params }: Props) {
 
   const related = relatedCakes(cakes, cake, 3);
   const occasionName = cake.occasionName;
-  const reviews = await getApprovedReviewsForCake(cake.id);
+  const [reviews, { whatsappNumber }] = await Promise.all([
+    getApprovedReviewsForCake(cake.id),
+    getSiteSettings(),
+  ]);
   const summary = cake.reviewSummary ?? emptyReviewSummary();
 
   return (
@@ -99,7 +103,7 @@ export default async function CakeDetailPage({ params }: Props) {
               {cake.description}
             </p>
 
-            <CakeOrderOptions cake={cake} />
+            <CakeOrderOptions cake={cake} whatsappNumber={whatsappNumber} />
           </div>
         </div>
 

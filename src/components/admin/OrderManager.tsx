@@ -26,6 +26,8 @@ export type OrderRow = {
   cakeName: string | null;
   size: string | null;
   flavor: string | null;
+  design: string;
+  delivery: string | null;
   referenceImages: string[];
   avatarTone: string;
 };
@@ -132,6 +134,8 @@ function exportCsv(rows: OrderRow[]) {
     "Cake",
     "Cake wording",
     "Comments",
+    "Design",
+    "Delivery",
     "Reference photos",
   ];
   const lines = rows.map((row) =>
@@ -147,6 +151,8 @@ function exportCsv(rows: OrderRow[]) {
       row.cakeName ?? "",
       row.message.replace(/\s+/g, " ").trim(),
       row.notes.replace(/\s+/g, " ").trim(),
+      row.design.replace(/\s+/g, " ").trim(),
+      row.delivery ?? "",
       row.referenceImages.join(" "),
     ]
       .map((value) => `"${String(value).replace(/"/g, '""')}"`)
@@ -725,9 +731,27 @@ export default function OrderManager({ orders, stats }: Props) {
                         Needed {selected.eventDateLabel}
                       </span>
                     ) : null}
+                    {selected.delivery ? (
+                      <span className="inline-flex items-center rounded-full bg-[#EEF3FB] px-3 py-1.5 text-xs font-semibold text-[#2F4B7C]">
+                        {selected.delivery}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </section>
+
+              {selected.design ? (
+                <section>
+                  <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A0A0A0]">
+                    Design requested
+                  </h3>
+                  <div className="mt-2.5 rounded-2xl border border-[#F3E8D8] bg-[#FFFBF4] px-4 py-3.5">
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#3A3A3A]">
+                      {selected.design}
+                    </p>
+                  </div>
+                </section>
+              ) : null}
 
               <section>
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A0A0A0]">

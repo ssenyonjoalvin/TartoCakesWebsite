@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
 
-type Variant = "primary" | "secondary" | "outline" | "light";
+type Variant = "primary" | "secondary" | "outline" | "light" | "whatsapp";
 type Size = "md" | "lg";
 
 type StyleProps = {
@@ -21,6 +21,8 @@ const variants: Record<Variant, string> = {
     "border-2 border-tarto-red text-tarto-red hover:bg-tarto-red hover:text-white",
   // For red/dark sections: white pill with red text.
   light: "bg-white text-tarto-red hover:bg-tarto-yellow hover:text-tarto-ink",
+  // WhatsApp green, darkened to 5.7:1 with white text (AA for any size).
+  whatsapp: "bg-[#187540] text-white hover:bg-[#125e33]",
 };
 
 // min-h-11 = 44px, the recommended minimum touch target.

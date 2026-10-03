@@ -89,8 +89,9 @@ const nav: NavItem[] = [
   { href: "/admin/customers", label: "Customer Management", icon: icons.customers },
 ];
 
-const settingsChildren = [
+const settingsChildren: { href: string; label: string; adminOnly?: boolean }[] = [
   { href: "/admin/profile", label: "My Profile" },
+  { href: "/admin/settings/whatsapp", label: "WhatsApp Ordering", adminOnly: true },
   { href: "/admin/settings/flavors", label: "Cake Flavors" },
   { href: "/admin/settings/sizes", label: "Cake Sizes" },
   { href: "/admin/settings/occasions", label: "Occasions" },
@@ -185,7 +186,9 @@ export default function AdminNav({
 
           {settingsOpen ? (
             <div className="mt-1 ml-2 space-y-1 border-l border-[#E8E8E8] pl-3">
-              {settingsChildren.map((child) => {
+              {settingsChildren
+                .filter((child) => !child.adminOnly || role === "ADMIN")
+                .map((child) => {
                 const active = pathname.startsWith(child.href);
                 return (
                   <Link

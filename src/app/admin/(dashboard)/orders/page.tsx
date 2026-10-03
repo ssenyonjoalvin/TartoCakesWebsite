@@ -126,6 +126,13 @@ export default async function AdminOrdersPage() {
       cakeName: row.cakeName ?? row.cake?.name ?? null,
       size: row.size,
       flavor: row.flavor,
+      design: row.design ?? "",
+      delivery:
+        row.deliveryMethod === "pickup"
+          ? "Pickup"
+          : row.deliveryMethod === "delivery"
+            ? `Delivery: ${row.deliveryLocation ?? "location not given"}`
+            : null,
       referenceImages: asStringArray(row.referenceImages),
       avatarTone: tones[index % tones.length],
     };

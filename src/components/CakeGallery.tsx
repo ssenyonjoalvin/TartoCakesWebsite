@@ -232,8 +232,8 @@ export default function CakeGallery({
             >
               Clear filters
             </Button>
-            <ButtonLink href={`/contact?cake=${encodeURIComponent("Custom Cake")}`}>
-              Request a custom cake
+            <ButtonLink href="/design-your-cake">
+              Design a custom cake
             </ButtonLink>
           </div>
         </div>

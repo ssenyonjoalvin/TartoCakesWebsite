@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { useDialogFocus } from "@/components/useDialogFocus";
 import CakeReviewForm from "@/components/CakeReviewForm";
 import StarRating from "@/components/StarRating";
 import type { PublicReview, ReviewSummary } from "@/lib/reviews";
@@ -32,6 +33,8 @@ export default function CakeReviews({
 }: Props) {
   const titleId = useId();
   const [open, setOpen] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, open);
   const counts = starCounts(reviews);
   const barMax = Math.max(...STAR_LEVELS.map((star) => counts[star]), 1);
 
@@ -155,6 +158,8 @@ export default function CakeReviews({
         >
           <div
             role="dialog"
+            ref={dialogRef}
+            tabIndex={-1}
             aria-modal="true"
             aria-labelledby={titleId}
             className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6"

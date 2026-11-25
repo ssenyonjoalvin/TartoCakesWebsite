@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
 export type ReviewFormState = {
   error?: string;
@@ -23,9 +24,9 @@ export async function submitCakeReview(
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const comment = String(formData.get("comment") ?? "").trim();
-  const ratingRaw = Number.parseInt(String(formData.get("rating") ?? ""), 10);
+  const ratingRaw = Number(formData.get("rating"));
 
-  if (!cakeId) {
+  if (!cakeId || cakeId.length > 40) {
     return { error: "Please choose the cake you want to review." };
   }
   if (!name || name.length < 2) {
@@ -34,7 +35,7 @@ export async function submitCakeReview(
   if (name.length > 80) {
     return { error: "Please use a shorter name." };
   }
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || email.length > 191 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { error: "Please enter a valid email address." };
   }
   if (!Number.isInteger(ratingRaw) || ratingRaw < 1 || ratingRaw > 5) {
@@ -45,6 +46,10 @@ export async function submitCakeReview(
   }
   if (comment.length > 800) {
     return { error: "Reviews must be 800 characters or fewer." };
+  }
+
+  if (isRateLimited(`review:${await clientIp()}`, 5, RATE_WINDOW_MS)) {
+    return { error: "Please wait a few minutes before submitting another review." };
   }
 
   try {

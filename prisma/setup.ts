@@ -1,11 +1,14 @@
 import "dotenv/config";
 import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 import mariadb from "mariadb";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { hashPassword } from "../src/lib/password";
 import { parseDatabaseUrl } from "../src/lib/db-url";
 import { seedCatalog } from "./seed-catalog";
+
+const prismaCli = createRequire(import.meta.url).resolve("prisma/build/index.js");
 
 function databaseName() {
   const name = parseDatabaseUrl().database;
@@ -16,10 +19,10 @@ function databaseName() {
 }
 
 function runPrisma(args: string[], inherit = true) {
-  const result = spawnSync("npx", ["prisma", ...args], {
+  const result = spawnSync(process.execPath, [prismaCli, ...args], {
     stdio: inherit ? "inherit" : "pipe",
     encoding: "utf8",
-    shell: true,
+    shell: false,
     env: process.env,
   });
   if (result.status !== 0) {
@@ -181,6 +184,9 @@ async function ensureAdmin() {
   const email = (process.env.ADMIN_EMAIL ?? "admin@tartocakes.com")
     .trim()
     .toLowerCase();
+  if (process.env.NODE_ENV === "production" && !process.env.ADMIN_PASSWORD) {
+    throw new Error("Configure ADMIN_PASSWORD before creating the first administrator.");
+  }
   const password = process.env.ADMIN_PASSWORD ?? "TartoAdmin2026";
   const prisma = createClient();
 

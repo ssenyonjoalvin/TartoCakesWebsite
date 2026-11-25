@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { AdminRole } from "@/generated/prisma/client";
 
 type NavItem = {
@@ -89,8 +89,11 @@ const nav: NavItem[] = [
   { href: "/admin/customers", label: "Customer Management", icon: icons.customers },
 ];
 
-const settingsChildren = [
+const settingsChildren: { href: string; label: string; adminOnly?: boolean }[] = [
   { href: "/admin/profile", label: "My Profile" },
+  { href: "/admin/settings/whatsapp", label: "WhatsApp Ordering", adminOnly: true },
+  { href: "/admin/settings/business", label: "Business & Delivery" },
+  { href: "/admin/settings/faq", label: "FAQ" },
   { href: "/admin/settings/flavors", label: "Cake Flavors" },
   { href: "/admin/settings/sizes", label: "Cake Sizes" },
   { href: "/admin/settings/occasions", label: "Occasions" },
@@ -119,11 +122,8 @@ export default function AdminNav({
   const items = nav.filter((item) => !item.adminOnly || role === "ADMIN");
   const settingsActive =
     pathname.startsWith("/admin/settings") || pathname.startsWith("/admin/profile");
-  const [settingsOpen, setSettingsOpen] = useState(settingsActive);
-
-  useEffect(() => {
-    if (settingsActive) setSettingsOpen(true);
-  }, [settingsActive]);
+  const [settingsState, setSettingsState] = useState({ pathname, open: settingsActive });
+  const settingsOpen = settingsState.pathname === pathname ? settingsState.open : settingsActive;
 
   return (
     <nav className="flex flex-1 flex-col px-3 py-4">
@@ -165,7 +165,7 @@ export default function AdminNav({
         <div>
           <button
             type="button"
-            onClick={() => setSettingsOpen((open) => !open)}
+            onClick={() => setSettingsState({ pathname, open: !settingsOpen })}
             className={`${navClass(settingsActive && pathname === "/admin/settings")} w-full`}
             aria-expanded={settingsOpen}
           >
@@ -185,7 +185,9 @@ export default function AdminNav({
 
           {settingsOpen ? (
             <div className="mt-1 ml-2 space-y-1 border-l border-[#E8E8E8] pl-3">
-              {settingsChildren.map((child) => {
+              {settingsChildren
+                .filter((child) => !child.adminOnly || role === "ADMIN")
+                .map((child) => {
                 const active = pathname.startsWith(child.href);
                 return (
                   <Link

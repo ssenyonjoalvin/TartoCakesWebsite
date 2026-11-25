@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ButtonLink } from "@/components/ui/Button";
 
 type Props = {
   title?: string;
@@ -7,12 +7,12 @@ type Props = {
 };
 
 export default function CtaBanner({
-  title = "Ready to make your celebration unforgettable? Let us bake your next happy moment.",
-  buttonLabel = "Request a Quote",
-  href = "/contact",
+  title = "Have a cake in mind? Let's create it.",
+  buttonLabel = "Design Your Cake",
+  href = "/design-your-cake",
 }: Props) {
   return (
-    <section className="bg-tarto-red">
+    <section data-surface="dark" className="bg-tarto-red">
       <div className="site-container flex flex-col items-start justify-between gap-6 py-10 md:flex-row md:items-center">
         <div className="flex items-start gap-4 md:items-center">
           <span className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/15 text-white sm:inline-flex">
@@ -24,12 +24,9 @@ export default function CtaBanner({
             {title}
           </p>
         </div>
-        <Link
-          href={href}
-          className="shrink-0 rounded-full bg-tarto-orange px-6 py-3 text-sm font-bold text-white transition hover:bg-tarto-yellow hover:text-tarto-ink"
-        >
+        <ButtonLink href={href} variant="secondary" className="shrink-0">
           {buttonLabel}
-        </Link>
+        </ButtonLink>
       </div>
     </section>
   );

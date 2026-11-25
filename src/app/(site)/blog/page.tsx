@@ -3,9 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   getBlogCategoryCounts,
-  getFeaturedBlogPost,
   getPublishedBlogPosts,
-  getRecentBlogPosts,
 } from "@/lib/public-blog";
 
 export const dynamic = "force-dynamic";
@@ -14,26 +12,32 @@ export const metadata: Metadata = {
   title: "Blog",
   description:
     "Cake ideas, wedding trends, and baking tips from Tarto Cakes UG.",
+  alternates: { canonical: "/blog" },
 };
 
-export default async function BlogPage() {
-  const [posts, featured, recent] = await Promise.all([
-    getPublishedBlogPosts(),
-    getFeaturedBlogPost(),
-    getRecentBlogPosts(3),
-  ]);
+export default async function BlogPage({ searchParams }: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const [allPosts, params] = await Promise.all([getPublishedBlogPosts(), searchParams]);
+  const query = typeof params.q === "string" ? params.q.trim().slice(0, 200) : "";
+  const posts = query ? allPosts.filter((post) =>
+    [post.title, post.excerpt, post.category].some((text) => text.toLowerCase().includes(query.toLowerCase()))
+  ) : allPosts;
+  const featured = posts.find((post) => post.featured) ?? posts[0];
+  const recent = allPosts.slice(0, 3);
 
   if (!featured) {
     return (
       <section className="bg-tarto-cream py-14">
         <div className="site-container text-center">
-          <p className="text-sm font-semibold tracking-[0.18em] text-tarto-orange">
+          <p className="text-sm font-semibold tracking-[0.18em] text-tarto-amber">
             STORIES & IDEAS
           </p>
           <h1 className="mt-3 text-4xl font-bold text-tarto-ink sm:text-5xl">
             Our Blog & Stories
           </h1>
-          <p className="mt-6 text-tarto-ink/70">No stories published yet.</p>
+          <p className="mt-6 text-tarto-ink/70">{query ? `No stories found for “${query}”.` : "No stories published yet."}</p>
+          {query ? <Link href="/blog" className="mt-5 inline-flex min-h-11 items-center font-semibold text-tarto-red hover:underline">Clear search</Link> : null}
         </div>
       </section>
     );
@@ -46,7 +50,7 @@ export default async function BlogPage() {
     <section className="bg-tarto-cream py-14">
       <div className="site-container">
         <div className="text-center">
-          <p className="text-sm font-semibold tracking-[0.18em] text-tarto-orange">
+          <p className="text-sm font-semibold tracking-[0.18em] text-tarto-amber">
             STORIES & IDEAS
           </p>
           <h1 className="mt-3 text-4xl font-bold text-tarto-ink sm:text-5xl">
@@ -54,6 +58,7 @@ export default async function BlogPage() {
           </h1>
         </div>
 
+        {query ? <p className="mt-6 text-sm text-tarto-ink/70">{posts.length} {posts.length === 1 ? "story" : "stories"} found for “{query}”. <Link href="/blog" className="font-semibold text-tarto-red hover:underline">Clear search</Link></p> : null}
         <div className="mt-12 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_300px] xl:gap-10">
           <div>
             <article className="overflow-hidden rounded-[1.25rem] bg-white shadow-[0_8px_30px_rgba(26,26,26,0.05)]">
@@ -71,7 +76,7 @@ export default async function BlogPage() {
                 </div>
               </Link>
               <div className="p-6 sm:p-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-orange">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-amber">
                   {featured.category}
                 </p>
                 <h2 className="mt-2 text-2xl font-bold text-tarto-ink sm:text-3xl">
@@ -113,7 +118,7 @@ export default async function BlogPage() {
                     </div>
                   </Link>
                   <div className="flex flex-1 flex-col p-5 sm:p-6">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-orange">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-amber">
                       {post.category}
                     </p>
                     <h3 className="mt-2 text-lg font-bold leading-snug text-tarto-ink">
@@ -138,12 +143,19 @@ export default async function BlogPage() {
 
           <aside className="space-y-6">
             <div className="rounded-[1.25rem] bg-white p-5 shadow-[0_8px_30px_rgba(26,26,26,0.05)]">
-              <h3 className="font-bold text-tarto-ink">Search</h3>
+              <form action="/blog" role="search" aria-label="Search blog posts">
+              <label htmlFor="blog-search" className="font-bold text-tarto-ink">Search stories</label>
               <input
+                id="blog-search"
+                name="q"
                 type="search"
+                defaultValue={query}
+                maxLength={200}
                 placeholder="Search posts..."
                 className="mt-3 w-full rounded-md border border-tarto-ink/10 bg-tarto-cream px-3 py-2.5 text-sm outline-none focus:border-tarto-red"
               />
+              <button type="submit" className="mt-3 min-h-11 w-full rounded-md bg-tarto-red px-4 py-2 text-sm font-semibold text-white hover:bg-tarto-red/90">Search</button>
+              </form>
             </div>
 
             <div className="rounded-[1.25rem] bg-white p-5 shadow-[0_8px_30px_rgba(26,26,26,0.05)]">

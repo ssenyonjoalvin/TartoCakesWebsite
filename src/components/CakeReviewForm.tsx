@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import {
   submitCakeReview,
   type ReviewFormState,
@@ -34,7 +34,11 @@ export default function CakeReviewForm({ cakeId }: Props) {
   }
 
   return (
-    <form action={formAction} className="relative space-y-4">
+    <form action={formAction} onSubmit={(event) => {
+      event.preventDefault();
+      const data = new FormData(event.currentTarget);
+      startTransition(() => formAction(data));
+    }} className="relative space-y-4">
       <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden>
         <label htmlFor="tarto_hp">Leave this blank</label>
         <input
@@ -55,7 +59,7 @@ export default function CakeReviewForm({ cakeId }: Props) {
           {[1, 2, 3, 4, 5].map((star) => (
             <label
               key={star}
-              className={`cursor-pointer rounded-md p-1 transition ${
+              className={`cursor-pointer rounded-md p-1 transition has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-tarto-ink ${
                 rating >= star ? "text-tarto-orange" : "text-tarto-ink/20"
               }`}
             >
@@ -86,7 +90,7 @@ export default function CakeReviewForm({ cakeId }: Props) {
           <label htmlFor="review-name" className="text-sm font-semibold text-tarto-ink">
             Name
           </label>
-          <input id="review-name" name="name" required className={fieldClass} />
+          <input id="review-name" name="name" required maxLength={80} autoComplete="name" className={fieldClass} />
         </div>
         <div>
           <label htmlFor="review-email" className="text-sm font-semibold text-tarto-ink">
@@ -96,6 +100,8 @@ export default function CakeReviewForm({ cakeId }: Props) {
             id="review-email"
             name="email"
             type="email"
+            maxLength={191}
+            autoComplete="email"
             required
             className={fieldClass}
           />
@@ -122,7 +128,7 @@ export default function CakeReviewForm({ cakeId }: Props) {
       </div>
 
       {state.error ? (
-        <p className="text-sm font-medium text-tarto-red">{state.error}</p>
+        <p role="alert" className="text-sm font-medium text-tarto-red">{state.error}</p>
       ) : null}
 
       <button

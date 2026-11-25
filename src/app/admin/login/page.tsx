@@ -17,13 +17,9 @@ export default async function AdminLoginPage() {
   if (session) redirect("/admin");
 
   return (
-    <div className="flex min-h-screen items-stretch p-3 sm:p-5">
+    <div className="flex min-h-screen items-stretch bg-[#faf9f6]">
       <div
-        className="relative flex w-full flex-1 flex-col overflow-hidden rounded-[1.75rem] sm:rounded-[2.25rem]"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 80% at 12% 42%, rgba(214,40,40,0.55) 0%, transparent 58%), radial-gradient(ellipse 65% 70% at 88% 28%, rgba(246,178,26,0.42) 0%, transparent 55%), radial-gradient(ellipse 50% 45% at 78% 88%, rgba(255,193,7,0.28) 0%, transparent 50%), linear-gradient(135deg, #f4b3ae 0%, #f3c4b6 38%, #fff4e5 72%, #fde7b8 100%)",
-        }}
+        className="relative flex w-full flex-1 flex-col bg-[#faf9f6]"
       >
         <Link
           href="/"
@@ -50,7 +46,7 @@ export default async function AdminLoginPage() {
             </p>
           </div>
 
-          <div className="w-full max-w-[420px] rounded-[1.75rem] bg-white px-7 py-9 shadow-[0_24px_60px_rgba(26,26,26,0.12)] sm:px-10 sm:py-10">
+          <div className="w-full max-w-[420px] rounded-3xl border border-gray-200 bg-white px-7 py-9 shadow-[0_12px_40px_rgba(26,26,26,0.08)] sm:px-10 sm:py-10">
             <div className="text-center">
               <h1 className="text-2xl font-bold text-tarto-ink">Welcome Back!</h1>
               <p className="mt-1.5 text-sm text-tarto-ink/50">

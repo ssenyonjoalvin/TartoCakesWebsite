@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import ContactForm from "@/components/ContactForm";
+import JsonLd from "@/components/JsonLd";
+import { bakeryJsonLd } from "@/lib/structured-data";
 import LocationMap from "@/components/LocationMap";
 import SocialIcons from "@/components/SocialIcons";
 import { contactInfo, formatPhone, phoneHref } from "@/data/contact";
 import { getPublishedCakes } from "@/lib/public-cakes";
 import { prisma } from "@/lib/prisma";
+import { getSiteSettings } from "@/lib/site-settings";
 
 export const metadata: Metadata = {
   title: "Contact",
+  alternates: { canonical: "/contact" },
   description:
     "Request a custom cake quote from Tarto Cakes UG. Call, email, or visit us at Pelican House, Stella — Najjanankumbi.",
 };
@@ -58,20 +62,23 @@ async function getFlavorOptions() {
 }
 
 export default async function ContactPage() {
-  const [cakeOptions, occasionOptions, sizeOptions, flavorOptions] =
+  const [cakeOptions, occasionOptions, sizeOptions, flavorOptions, settings] =
     await Promise.all([
       getCakeOptions(),
       getOccasionOptions(),
       getSizeOptions(),
       getFlavorOptions(),
+      getSiteSettings(),
     ]);
+  const { openingHours } = settings.business;
 
   return (
     <>
+      <JsonLd data={bakeryJsonLd()} />
       <section className="bg-tarto-cream py-14">
         <div className="site-container">
           <div className="text-center">
-            <p className="text-sm font-semibold tracking-[0.18em] text-tarto-orange">
+            <p className="text-sm font-semibold tracking-[0.18em] text-tarto-amber">
               WE&apos;D LOVE TO HEAR FROM YOU
             </p>
             <h1 className="mt-3 text-4xl font-bold text-tarto-ink sm:text-5xl">
@@ -140,6 +147,20 @@ export default async function ContactPage() {
                       <p>{contactInfo.city}</p>
                     </div>
                   </li>
+                  {openingHours ? (
+                    <li className="flex gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-tarto-yellow/50 text-tarto-red">
+                        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-2" aria-hidden>
+                          <circle cx="12" cy="12" r="9" />
+                          <path d="M12 7v5l3.5 2" strokeLinecap="round" />
+                        </svg>
+                      </span>
+                      <div>
+                        <p className="font-semibold text-tarto-ink">Opening hours</p>
+                        <p className="whitespace-pre-line">{openingHours}</p>
+                      </div>
+                    </li>
+                  ) : null}
                 </ul>
 
                 <div className="mt-6">

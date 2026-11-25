@@ -121,12 +121,6 @@ function monthStart(date: Date) {
   return value;
 }
 
-function nextMonth(date: Date) {
-  const value = new Date(date);
-  value.setMonth(value.getMonth() + 1);
-  return value;
-}
-
 function startOfWeek(date: Date) {
   const value = startOfDay(date);
   const day = value.getDay();

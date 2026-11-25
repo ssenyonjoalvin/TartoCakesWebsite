@@ -1,19 +1,24 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
+import { contactInfo } from "@/data/contact";
 import { loginAdmin, type LoginState } from "@/app/admin/actions";
 
 const initialState: LoginState = {};
 
 const fieldClass =
-  "mt-1.5 w-full rounded-full border border-[#EFEFEF] bg-[#F7F7F7] px-4 py-3 text-sm text-tarto-ink outline-none transition placeholder:text-tarto-ink/35 focus:border-tarto-red/40 focus:bg-white";
+  "mt-1.5 w-full rounded-full border border-[#EFEFEF] bg-[#F7F7F7] px-4 py-3 text-base text-tarto-ink outline-none transition placeholder:text-tarto-ink/35 focus:border-tarto-red/40 focus:bg-white sm:text-sm";
 
 export default function AdminLoginForm() {
   const [state, formAction, pending] = useActionState(loginAdmin, initialState);
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <form action={formAction} className="mt-8 space-y-5">
+    <form action={formAction} onSubmit={(event) => {
+      event.preventDefault();
+      const data = new FormData(event.currentTarget);
+      startTransition(() => formAction(data));
+    }} className="mt-8 space-y-5">
       <div>
         <label htmlFor="email" className="text-sm font-semibold text-tarto-ink">
           Email
@@ -22,6 +27,7 @@ export default function AdminLoginForm() {
           id="email"
           name="email"
           type="email"
+          maxLength={254}
           required
           autoComplete="email"
           placeholder="Enter your Email"
@@ -38,6 +44,7 @@ export default function AdminLoginForm() {
             id="password"
             name="password"
             type={showPassword ? "text" : "password"}
+            maxLength={256}
             required
             autoComplete="current-password"
             placeholder="Enter Password"
@@ -46,8 +53,9 @@ export default function AdminLoginForm() {
           <button
             type="button"
             onClick={() => setShowPassword((value) => !value)}
-            className="absolute inset-y-0 right-3.5 flex items-center text-tarto-ink/35 transition hover:text-tarto-red"
+            className="absolute inset-y-0 right-1 flex w-11 items-center justify-center rounded-full text-tarto-ink/60 transition hover:text-tarto-red"
             aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-pressed={showPassword}
           >
             {showPassword ? (
               <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-none stroke-current stroke-[1.8]" aria-hidden>
@@ -73,11 +81,11 @@ export default function AdminLoginForm() {
           />
           Remember me
         </label>
-        <span className="font-medium text-tarto-red">Forgot password?</span>
+        <a href={`mailto:${contactInfo.email}?subject=Admin%20access%20assistance`} className="font-medium text-tarto-red hover:underline">Need help signing in?</a>
       </div>
 
       {state.error ? (
-        <p className="rounded-xl bg-tarto-red/10 px-3 py-2 text-center text-sm text-tarto-red">
+        <p role="alert" className="rounded-xl bg-tarto-red/10 px-3 py-2 text-center text-sm text-tarto-red">
           {state.error}
         </p>
       ) : null}

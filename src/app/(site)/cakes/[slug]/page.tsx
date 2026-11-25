@@ -2,13 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import CakeCard from "@/components/CakeCard";
 import CakeOrderOptions from "@/components/CakeOrderOptions";
-import { formatPrice } from "@/data/cakes";
+import JsonLd from "@/components/JsonLd";
+import { cakeJsonLd } from "@/lib/structured-data";
 import {
   getPublishedCakeBySlug,
   getPublishedCakes,
   relatedCakes,
 } from "@/lib/public-cakes";
 import CakeImageGallery from "@/components/CakeImageGallery";
+import { formatCakePrice, showsStartingPrice } from "@/lib/pricing";
+import { getSiteSettings } from "@/lib/site-settings";
 import CakeReviews from "@/components/CakeReviews";
 import StarRating from "@/components/StarRating";
 import {
@@ -24,9 +27,19 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const cake = await getPublishedCakeBySlug(slug);
   if (!cake) return { title: "Cake Not Found" };
+  const description =
+    cake.description.length > 160
+      ? `${cake.description.slice(0, 157).trimEnd()}…`
+      : cake.description;
   return {
     title: cake.name,
-    description: cake.description,
+    description,
+    alternates: { canonical: `/cakes/${cake.slug}` },
+    openGraph: {
+      title: `${cake.name} | Tarto Cakes UG`,
+      description,
+      images: cake.image ? [{ url: cake.image, alt: cake.name }] : undefined,
+    },
   };
 }
 
@@ -38,11 +51,15 @@ export default async function CakeDetailPage({ params }: Props) {
 
   const related = relatedCakes(cakes, cake, 3);
   const occasionName = cake.occasionName;
-  const reviews = await getApprovedReviewsForCake(cake.id);
+  const [reviews, { whatsappNumber }] = await Promise.all([
+    getApprovedReviewsForCake(cake.id),
+    getSiteSettings(),
+  ]);
   const summary = cake.reviewSummary ?? emptyReviewSummary();
 
   return (
     <>
+      <JsonLd data={cakeJsonLd(cake)} />
       <section className="bg-tarto-cream py-8 lg:py-12">
         <div className="site-container grid items-start gap-8 lg:grid-cols-[480px_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[520px_minmax(0,1fr)]">
           <CakeImageGallery
@@ -68,8 +85,14 @@ export default async function CakeDetailPage({ params }: Props) {
             </h1>
 
             <p className="mt-3 text-2xl font-bold text-tarto-red">
-              {formatPrice(cake.price)}
+              {formatCakePrice(cake)}
             </p>
+            {showsStartingPrice(cake) ? (
+              <p className="mt-1 text-sm text-tarto-ink/70">
+                Final price depends on the size, flavour and design you choose.
+                We confirm it with you before baking.
+              </p>
+            ) : null}
 
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-tarto-ink/60">
               <a
@@ -93,7 +116,7 @@ export default async function CakeDetailPage({ params }: Props) {
               {cake.description}
             </p>
 
-            <CakeOrderOptions cake={cake} />
+            <CakeOrderOptions cake={cake} whatsappNumber={whatsappNumber} />
           </div>
         </div>
 

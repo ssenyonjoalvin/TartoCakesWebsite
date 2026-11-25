@@ -83,7 +83,6 @@ export default function AdminShell(props: Props) {
 
 function AdminShellLayout({
   name,
-  email,
   role,
   avatarUrl,
   notifications,
@@ -92,10 +91,6 @@ function AdminShellLayout({
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const { query, setQuery } = useAdminSearch();
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -173,6 +168,7 @@ function AdminShellLayout({
               </span>
               <input
                 type="search"
+                aria-label={searchPlaceholder(pathname)}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={searchPlaceholder(pathname)}
@@ -182,8 +178,8 @@ function AdminShellLayout({
 
             <div className="flex shrink-0 items-center gap-1 sm:gap-2">
               <AdminNotifications summary={notifications} />
-              <button
-                type="button"
+              <Link
+                href="/contact"
                 aria-label="Help"
                 className="hidden rounded-full p-2 text-[#666] transition hover:bg-[#F3F3F3] hover:text-tarto-ink sm:inline-flex"
               >
@@ -192,7 +188,7 @@ function AdminShellLayout({
                   <path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.8" />
                   <circle cx="12" cy="17" r="0.8" fill="currentColor" stroke="none" />
                 </svg>
-              </button>
+              </Link>
               <Link
                 href="/admin/profile"
                 className="ml-1 block transition hover:opacity-90"

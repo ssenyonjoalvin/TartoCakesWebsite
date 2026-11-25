@@ -22,6 +22,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: post.title,
     description: post.excerpt,
+    alternates: { canonical: `/blog/${post.slug}` },
+    openGraph: {
+      type: "article",
+      title: post.title,
+      description: post.excerpt,
+      images: post.image ? [{ url: post.image, alt: post.title }] : undefined,
+    },
   };
 }
 
@@ -151,7 +158,7 @@ export default async function BlogPostPage({ params }: Props) {
                     />
                   </div>
                   <div className="p-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-orange">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-tarto-amber">
                       {item.category}
                     </p>
                     <h3 className="mt-2 text-lg font-bold leading-snug text-tarto-ink group-hover:text-tarto-red">

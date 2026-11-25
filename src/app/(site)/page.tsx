@@ -1,6 +1,21 @@
 import CakeCard from "@/components/CakeCard";
 import HomeHero from "@/components/HomeHero";
-import { getPublishedCakes } from "@/lib/public-cakes";
+import type { Metadata } from "next";
+import FaqList from "@/components/FaqList";
+import JsonLd from "@/components/JsonLd";
+import HowItWorks from "@/components/HowItWorks";
+import OccasionGrid from "@/components/OccasionGrid";
+import ReviewHighlights from "@/components/ReviewHighlights";
+import { ButtonLink } from "@/components/ui/Button";
+import SectionHeading from "@/components/ui/SectionHeading";
+import { getOccasionShowcase, getPublishedCakes } from "@/lib/public-cakes";
+import { getApprovedReviews } from "@/lib/reviews";
+import { getSiteSettings, publicFaq } from "@/lib/site-settings";
+import { bakeryJsonLd } from "@/lib/structured-data";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const features = [
   {
@@ -83,12 +98,19 @@ const features = [
 ];
 
 export default async function HomePage() {
-  const published = await getPublishedCakes();
+  const [published, occasions, reviews, settings] = await Promise.all([
+    getPublishedCakes(),
+    getOccasionShowcase(),
+    getApprovedReviews(3),
+    getSiteSettings(),
+  ]);
+  const faqPreview = publicFaq(settings).slice(0, 4);
   const featured = published.filter((cake) => cake.featured);
   const bestsellers = (featured.length > 0 ? featured : published).slice(0, 4);
 
   return (
     <>
+      <JsonLd data={bakeryJsonLd()} />
       <HomeHero />
 
       <section className="bg-tarto-yellow">
@@ -112,18 +134,58 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {occasions.length > 0 ? (
+        <section className="bg-white py-14 sm:py-16">
+          <div className="site-container">
+            <SectionHeading
+              eyebrow="Shop by occasion"
+              title="What are you celebrating?"
+            />
+            <div className="mt-10">
+              <OccasionGrid occasions={occasions} />
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <section className="bg-tarto-cream py-14 sm:py-16">
         <div className="site-container">
-          <h2 className="text-center text-3xl font-bold tracking-wide text-tarto-red sm:text-4xl">
-            OUR BESTSELLERS
-          </h2>
+          <SectionHeading
+            eyebrow="Customer favourites"
+            title="Our Bestsellers"
+          />
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {bestsellers.map((cake) => (
               <CakeCard key={cake.id} cake={cake} />
             ))}
           </div>
+          <div className="mt-10 flex justify-center">
+            <ButtonLink href="/cakes" variant="outline" size="lg">
+              View All Cakes
+            </ButtonLink>
+          </div>
         </div>
       </section>
+
+      <HowItWorks />
+
+      {reviews.length > 0 ? <ReviewHighlights reviews={reviews} /> : null}
+
+      {faqPreview.length > 0 ? (
+        <section className="bg-white py-14 sm:py-16">
+          <div className="site-container mx-auto max-w-3xl">
+            <SectionHeading eyebrow="Questions" title="Good to know" />
+            <div className="mt-10">
+              <FaqList items={faqPreview} />
+            </div>
+            <div className="mt-8 flex justify-center">
+              <ButtonLink href="/faq" variant="outline">
+                See all questions
+              </ButtonLink>
+            </div>
+          </div>
+        </section>
+      ) : null}
     </>
   );
 }

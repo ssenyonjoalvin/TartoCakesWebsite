@@ -11,6 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Delivery & Pickup",
     description:
       "Cake delivery and pickup from Tarto Cakes UG in Kampala: delivery areas, fees, how early to order and pickup details.",
+    alternates: { canonical: "/delivery" },
     robots: hasDeliveryInfo(business) ? undefined : { index: false },
   };
 }

@@ -202,11 +202,11 @@ public/images/    uploaded and site photos
 | Reviews | Database (approved only) | Database |
 | Flavours, sizes, occasions | Database | Database |
 | Customers | Created from quotes | Database |
-| Blog | Static `src/data/blog.ts` | Database |
+| Blog | Published database posts plus static fallback stories | Database |
 | Contact, map, socials | `src/data/contact.ts` | — |
 | About page | Static page copy | — |
 
-Admin blog posts are stored in the database. The public `/blog` pages still read `src/data/blog.ts`.
+Published admin blog posts appear on the public blog. Static stories in `src/data/blog.ts` fill in slugs that are not returned by the published-post query.
 
 ---
 
@@ -230,3 +230,20 @@ Fonts: **Poppins** (UI), **Pacifico** (wordmark). Favicon: Tarto Cakes UG logo.
 - No email or SMS notifications — staff follow up from the orders list
 - Newsletter fields on the site send people to Contact; there is no subscriber backend
 - Dashboard sales figures use completed order cake prices. Product cost / expenses are not tracked
+
+## Local verification
+
+Run `npm run lint`, `npm test`, `npx tsc --noEmit`, and `npm run build`.
+Production authentication requires an `AUTH_SECRET` of at least 32 characters and an explicitly configured `ADMIN_PASSWORD` when creating the first administrator.
+
+Optional Chrome checks use isolated tooling, without adding a runtime dependency:
+
+```powershell
+npm install --prefix .qa --no-save --package-lock=false playwright
+node .qa/browser-review.mjs
+node --import tsx .qa/flows.mjs
+```
+
+Start the app on `http://localhost:3000` first. The scripts expect Chrome at its standard Windows installation path and block external browser requests. The flow script requires a local database, uses a synthetic `example.invalid` customer, and removes its records in a `finally` block. It does not open authenticated customer-management screens or upload files to Cloudinary. Reports and screenshots are written to the ignored `.qa/artifacts/` directory.
+
+Quote confirmation details require a signed, HTTP-only browser cookie that expires after one hour. Sharing the confirmation URL alone does not grant access to the request summary.

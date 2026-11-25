@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
@@ -59,6 +60,7 @@ function parseKeepImages(formData: FormData) {
 }
 
 function revalidateCakePages(slug?: string) {
+  updateTag(CACHE_TAGS.catalog);
   revalidatePath("/admin/products");
   revalidatePath("/cakes");
   revalidatePath("/");

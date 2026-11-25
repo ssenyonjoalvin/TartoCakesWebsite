@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Pacifico, Poppins } from "next/font/google";
 import "./globals.css";
+import { siteUrl } from "@/lib/site-url";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -14,13 +15,34 @@ const brandScript = Pacifico({
   weight: "400",
 });
 
+const description =
+  "Custom cakes for birthdays, weddings, and celebrations in Kampala, Uganda. Choose a design or create your own, and we confirm the price before baking.";
+
 export const metadata: Metadata = {
+  // Makes relative URLs (canonical, Open Graph images) absolute.
+  metadataBase: new URL(siteUrl()),
+  applicationName: "Tarto Cakes UG",
   title: {
     default: "Tarto Cakes UG | Great Taste in Every Bite",
     template: "%s | Tarto Cakes UG",
   },
-  description:
-    "Custom cakes for birthdays, weddings, and celebrations across Uganda. Fresh ingredients, handmade with love.",
+  description,
+  openGraph: {
+    type: "website",
+    siteName: "Tarto Cakes UG",
+    locale: "en_UG",
+    description,
+    images: [
+      {
+        url: "/images/chocolate-layered-cake.jpg",
+        alt: "Chocolate layer cake by Tarto Cakes UG",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@tartocakesUg",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico" },

@@ -8,9 +8,9 @@ type Props = {
 
 export default function OccasionGrid({ occasions }: Props) {
   return (
-    <ul className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+    <ul className="flex snap-x snap-proximity gap-3 overflow-x-auto pb-4 sm:gap-5" aria-label="Shop by occasion">
       {occasions.map((occasion) => (
-        <li key={occasion.slug}>
+        <li key={occasion.slug} className="w-[70%] shrink-0 snap-start sm:w-[40%] md:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-3.75rem)/4)]">
           <Link
             href={`/cakes?occasion=${encodeURIComponent(occasion.slug)}`}
             className="group relative block aspect-[4/5] overflow-hidden rounded-2xl bg-[#f7efe3]"

@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "About Us",
   description:
     "About Tarto Cakes UG — our bakery story, craftsmanship, values, and master bakers.",
+  alternates: { canonical: "/about" },
 };
 
 const processImages = [

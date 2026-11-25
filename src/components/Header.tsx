@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Logo from "@/components/Logo";
 import { ButtonLink } from "@/components/ui/Button";
 
@@ -22,11 +22,15 @@ function isActive(pathname: string, href: string) {
 export default function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        menuButton.current?.focus();
+      }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -37,7 +41,7 @@ export default function Header() {
       <div className="site-container flex items-center justify-between gap-4 py-3">
         <Logo variant="header" />
 
-        <nav aria-label="Main" className="hidden items-center gap-7 lg:flex">
+        <nav aria-label="Main" className="hidden items-center gap-5 whitespace-nowrap xl:flex">
           {navLinks.map((link) => {
             const active = isActive(pathname, link.href);
             return (
@@ -58,15 +62,18 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <ButtonLink href="/contact" className="hidden shadow-sm sm:inline-flex">
-            Request a Quote
-          </ButtonLink>
+          <div className="hidden shrink-0 sm:block">
+            <ButtonLink href="/contact" className="shadow-sm">
+              Request a Quote
+            </ButtonLink>
+          </div>
           <button
             type="button"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             aria-controls="mobile-menu"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-tarto-red/20 text-tarto-ink lg:hidden"
+            ref={menuButton}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-tarto-red/20 text-tarto-ink xl:hidden"
             onClick={() => setOpen((v) => !v)}
           >
             <svg
@@ -88,7 +95,7 @@ export default function Header() {
       {open && (
         <div
           id="mobile-menu"
-          className="border-t border-tarto-red/10 bg-tarto-cream px-4 py-4 lg:hidden"
+          className="border-t border-tarto-red/10 bg-tarto-cream px-4 py-4 xl:hidden"
         >
           <nav aria-label="Mobile" className="flex flex-col gap-1">
             {navLinks.map((link) => {

@@ -2,6 +2,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import { getSiteSettings } from "@/lib/site-settings";
+import { contactInfo } from "@/data/contact";
+import { normalizeWhatsAppNumber } from "@/lib/whatsapp";
 
 export default async function SiteLayout({
   children,
@@ -25,7 +27,7 @@ export default async function SiteLayout({
         {children}
       </main>
       <Footer />
-      <WhatsAppFloat number={whatsappNumber} />
+      <WhatsAppFloat number={whatsappNumber || normalizeWhatsAppNumber(contactInfo.phones[0]) || ""} />
     </div>
   );
 }

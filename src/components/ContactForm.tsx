@@ -14,8 +14,9 @@ import {
   type QuoteFormState,
 } from "@/app/(site)/contact/actions";
 import { Button } from "@/components/ui/Button";
+import FilePreview from "@/components/FilePreview";
 import { FieldError, errorProps, focusFirstError } from "@/components/ui/FieldError";
-import { CUSTOM_CAKE, HONEYPOT_FIELD, OTHER_OCCASION } from "@/lib/quote-form";
+import { CUSTOM_CAKE, HONEYPOT_FIELD, OTHER_OCCASION, todayInKampala } from "@/lib/quote-form";
 
 const initialState: QuoteFormState = {};
 const MAX_REFERENCE_IMAGES = 3;
@@ -80,7 +81,6 @@ export default function ContactForm({
   );
   const [occasionChoice, setOccasionChoice] = useState("");
   const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
-  const [referencePreviews, setReferencePreviews] = useState<string[]>([]);
   const [referenceError, setReferenceError] = useState<string | undefined>();
   const referenceInputRef = useRef<HTMLInputElement>(null);
   const errors = state.fieldErrors ?? {};
@@ -88,14 +88,6 @@ export default function ContactForm({
   useEffect(() => {
     focusFirstError(FIELD_ORDER, state.fieldErrors);
   }, [state.fieldErrors]);
-
-  useEffect(() => {
-    const urls = referenceFiles.map((file) => URL.createObjectURL(file));
-    setReferencePreviews(urls);
-    return () => {
-      urls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [referenceFiles]);
 
   useEffect(() => {
     if (!referenceInputRef.current) return;
@@ -203,6 +195,7 @@ export default function ContactForm({
         <input
           id="name"
           name="name"
+          maxLength={100}
           autoComplete="name"
           required
           className={fieldClass}
@@ -217,6 +210,7 @@ export default function ContactForm({
         <input
           id="email"
           name="email"
+          maxLength={191}
           type="email"
           autoComplete="email"
           required
@@ -232,6 +226,7 @@ export default function ContactForm({
         <input
           id="phone"
           name="phone"
+          maxLength={40}
           type="tel"
           autoComplete="tel"
           required
@@ -273,7 +268,7 @@ export default function ContactForm({
             name="eventDate"
             type="date"
             required
-            min={new Date().toISOString().slice(0, 10)}
+            min={todayInKampala()}
             className={fieldClass}
             {...errorProps("eventDate", errors.eventDate, "eventDate-help")}
           />
@@ -432,17 +427,15 @@ export default function ContactForm({
             ? "Add another photo"
             : "Attach cake photos"}
         </button>
-        {referencePreviews.length > 0 ? (
+        {referenceFiles.length > 0 ? (
           <div className="mt-3 grid grid-cols-3 gap-2">
-            {referencePreviews.map((src, index) => (
+            {referenceFiles.map((file, index) => (
               <div
-                key={`${src}-${index}`}
+                key={`${file.name}-${file.lastModified}-${index}`}
                 className="relative overflow-hidden rounded-lg bg-tarto-cream"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={src}
-                  alt=""
+                <FilePreview
+                  file={file}
                   className="h-24 w-full object-cover"
                 />
                 <button

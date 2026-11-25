@@ -1,4 +1,6 @@
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
+import { CACHE_SECONDS, CACHE_TAGS } from "@/lib/cache-tags";
 import { prisma } from "@/lib/prisma";
 import {
   BUSINESS_FIELDS,
@@ -86,11 +88,21 @@ function parseFaq(raw: string | undefined): FaqItem[] {
  * Cached per request. Never throws: if the DB is unreachable the public site
  * still renders, just without admin-configured extras.
  */
+// Only successful reads are cached: if the query throws, nothing is stored
+// and the next request tries the DB again.
+const loadSettingRows = unstable_cache(
+  () =>
+    prisma.siteSetting.findMany({
+      where: { key: { in: Object.values(KEYS) } },
+      select: { key: true, value: true },
+    }),
+  ["site-settings"],
+  { tags: [CACHE_TAGS.settings], revalidate: CACHE_SECONDS }
+);
+
 export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
   try {
-    const rows = await prisma.siteSetting.findMany({
-      where: { key: { in: Object.values(KEYS) } },
-    });
+    const rows = await loadSettingRows();
     const byKey = new Map(rows.map((row) => [row.key, row.value]));
     return {
       whatsappNumber: byKey.get(KEYS.whatsappNumber) ?? DEFAULTS.whatsappNumber,

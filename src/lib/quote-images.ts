@@ -22,8 +22,6 @@ export async function saveQuoteImages(files: File[]) {
     throw new Error(`You can attach up to ${MAX_QUOTE_IMAGES} photos.`);
   }
 
-  const urls: string[] = [];
-
   for (const file of files) {
     if (file.size === 0) continue;
     if (!isAllowedImage(file)) {
@@ -33,10 +31,19 @@ export async function saveQuoteImages(files: File[]) {
       throw new Error("Each photo must be under 5MB.");
     }
 
-    const uploaded = await uploadImage(file, "quotes");
-    urls.push(uploaded.url);
   }
 
+  const urls: string[] = [];
+  for (const file of files) {
+    if (file.size === 0) continue;
+    try {
+      const uploaded = await uploadImage(file, "quotes");
+      urls.push(uploaded.url);
+    } catch {
+      // Provider errors can contain deployment details; keep public feedback safe.
+      throw new Error("We could not upload your cake photos. Please try again or submit without photos.");
+    }
+  }
   return urls;
 }
 

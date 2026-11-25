@@ -8,10 +8,8 @@ function sslOptionsFor(url: URL) {
 
   if (!mode || mode === "DISABLED" || mode === "FALSE") return undefined;
 
-  // ssl-mode=REQUIRED (Aiven's default) means "encrypt, don't verify the CA".
-  // VERIFY_CA / VERIFY_IDENTITY would need an explicit CA cert, which this
-  // app doesn't ship, so they fall back to the same relaxed verification.
-  return { rejectUnauthorized: false };
+  // Explicit verification modes must never silently disable certificate checks.
+  return { rejectUnauthorized: mode === "VERIFY_CA" || mode === "VERIFY_IDENTITY" };
 }
 
 export function parseDatabaseUrl(raw = process.env.DATABASE_URL) {

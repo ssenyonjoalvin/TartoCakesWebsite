@@ -3,6 +3,7 @@ import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { ButtonLink, buttonClasses } from "@/components/ui/Button";
 import { prisma } from "@/lib/prisma";
 import { getSiteSettings } from "@/lib/site-settings";
+import { hasQuoteAccess } from "@/lib/quote-access";
 import {
   buildWhatsAppOrderMessage,
   quoteReference,
@@ -19,11 +20,11 @@ type Props = {
 };
 
 /**
- * Shows only what the customer just typed about the cake. Never contact
- * details: anyone holding the link (e.g. a shared screenshot) can open it.
+ * Only the browser that submitted the request can retrieve its summary.
  */
 async function getQuoteSummary(id: string | undefined) {
   if (!id || id.length > 40) return null;
+  if (!(await hasQuoteAccess(id))) return null;
   try {
     return await prisma.cakeOrder.findUnique({
       where: { id },

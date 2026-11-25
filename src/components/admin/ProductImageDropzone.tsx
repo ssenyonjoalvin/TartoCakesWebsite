@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import MediaLibraryPicker from "@/components/admin/MediaLibraryPicker";
+import FilePreview from "@/components/FilePreview";
 import type { MediaItem } from "@/lib/media-types";
 
 export const MAX_PRODUCT_IMAGES = 12;
@@ -70,18 +71,6 @@ export default function ProductImageDropzone({
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
-  const [previews, setPreviews] = useState<{ key: string; url: string }[]>([]);
-
-  useEffect(() => {
-    const next = files.map((file) => ({
-      key: fileKey(file),
-      url: URL.createObjectURL(file),
-    }));
-    setPreviews(next);
-    return () => {
-      next.forEach((item) => URL.revokeObjectURL(item.url));
-    };
-  }, [files]);
 
   useEffect(() => {
     if (!inputRef.current) return;
@@ -354,7 +343,6 @@ export default function ProductImageDropzone({
       {files.length > 0 ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {files.map((file, index) => {
-            const preview = previews.find((item) => item.key === fileKey(file));
             const isMain =
               keptImages.length === 0 &&
               libraryImages.length === 0 &&
@@ -364,18 +352,7 @@ export default function ProductImageDropzone({
                 key={fileKey(file)}
                 className="relative overflow-hidden rounded-xl bg-[#FAFAFA]"
               >
-                {preview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={preview.url}
-                    alt=""
-                    className="h-32 w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-32 items-center justify-center text-xs text-[#999]">
-                    {file.name}
-                  </div>
-                )}
+                <FilePreview file={file} className="h-32 w-full object-cover" />
                 {isMain ? (
                   <span className="absolute left-2 top-2 rounded-md bg-tarto-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
                     Main

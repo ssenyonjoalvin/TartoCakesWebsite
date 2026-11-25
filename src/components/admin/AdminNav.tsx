@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { AdminRole } from "@/generated/prisma/client";
 
 type NavItem = {
@@ -122,11 +122,8 @@ export default function AdminNav({
   const items = nav.filter((item) => !item.adminOnly || role === "ADMIN");
   const settingsActive =
     pathname.startsWith("/admin/settings") || pathname.startsWith("/admin/profile");
-  const [settingsOpen, setSettingsOpen] = useState(settingsActive);
-
-  useEffect(() => {
-    if (settingsActive) setSettingsOpen(true);
-  }, [settingsActive]);
+  const [settingsState, setSettingsState] = useState({ pathname, open: settingsActive });
+  const settingsOpen = settingsState.pathname === pathname ? settingsState.open : settingsActive;
 
   return (
     <nav className="flex flex-1 flex-col px-3 py-4">
@@ -168,7 +165,7 @@ export default function AdminNav({
         <div>
           <button
             type="button"
-            onClick={() => setSettingsOpen((open) => !open)}
+            onClick={() => setSettingsState({ pathname, open: !settingsOpen })}
             className={`${navClass(settingsActive && pathname === "/admin/settings")} w-full`}
             aria-expanded={settingsOpen}
           >

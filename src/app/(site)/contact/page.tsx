@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import ContactForm from "@/components/ContactForm";
+import JsonLd from "@/components/JsonLd";
+import { bakeryJsonLd } from "@/lib/structured-data";
 import LocationMap from "@/components/LocationMap";
 import SocialIcons from "@/components/SocialIcons";
 import { contactInfo, formatPhone, phoneHref } from "@/data/contact";
@@ -10,6 +12,7 @@ import { getSiteSettings } from "@/lib/site-settings";
 
 export const metadata: Metadata = {
   title: "Contact",
+  alternates: { canonical: "/contact" },
   description:
     "Request a custom cake quote from Tarto Cakes UG. Call, email, or visit us at Pelican House, Stella — Najjanankumbi.",
 };
@@ -71,6 +74,7 @@ export default async function ContactPage() {
 
   return (
     <>
+      <JsonLd data={bakeryJsonLd()} />
       <section className="bg-tarto-cream py-14">
         <div className="site-container">
           <div className="text-center">

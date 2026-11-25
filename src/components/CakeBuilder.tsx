@@ -16,7 +16,7 @@ import {
 import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { FieldError, errorProps } from "@/components/ui/FieldError";
-import { CUSTOM_CAKE, HONEYPOT_FIELD, OTHER_OCCASION } from "@/lib/quote-form";
+import { CUSTOM_CAKE, HONEYPOT_FIELD, OTHER_OCCASION, parseEventDate, todayInKampala } from "@/lib/quote-form";
 import { buildWhatsAppOrderMessage, whatsAppLink } from "@/lib/whatsapp";
 
 // ---------------------------------------------------------------------------
@@ -148,6 +148,8 @@ function validateStep(step: number, state: BuilderState): BuilderState["errors"]
   if (step === 2 && !state.flavor) errors.flavor = "Please choose a flavour.";
   if (step === 6) {
     if (!state.eventDate) errors.eventDate = "Please choose the date you need the cake.";
+    else if (!parseEventDate(state.eventDate)) errors.eventDate = "Please enter a valid date.";
+    else if (state.eventDate < todayInKampala()) errors.eventDate = "The date cannot be in the past.";
     if (!state.deliveryMethod) errors.deliveryMethod = "Please choose pickup or delivery.";
     if (state.deliveryMethod === "delivery" && state.deliveryLocation.trim().length < 3) {
       errors.deliveryLocation = "Please tell us where to deliver.";
@@ -159,12 +161,6 @@ function validateStep(step: number, state: BuilderState): BuilderState["errors"]
     }
   }
   return errors;
-}
-
-function todayIso() {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  return now.toISOString().slice(0, 10);
 }
 
 function formatDate(iso: string) {
@@ -688,7 +684,7 @@ export default function CakeBuilder({ occasions, sizes, flavors, whatsappNumber 
                 <input
                   id="eventDate"
                   type="date"
-                  min={todayIso()}
+                  min={todayInKampala()}
                   value={state.eventDate}
                   onChange={(event) => set("eventDate")(event.target.value)}
                   className={inputClass}

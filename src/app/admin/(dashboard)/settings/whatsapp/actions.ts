@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { redirect } from "next/navigation";
 import { getAdminSession } from "@/lib/auth";
 import { saveSiteSetting } from "@/lib/site-settings";
@@ -47,6 +48,7 @@ export async function updateWhatsAppSettings(
   }
 
   // The number is rendered on every public page.
+  updateTag(CACHE_TAGS.settings);
   revalidatePath("/", "layout");
 
   return {

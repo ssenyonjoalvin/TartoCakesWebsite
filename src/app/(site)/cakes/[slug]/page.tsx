@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import CakeCard from "@/components/CakeCard";
 import CakeOrderOptions from "@/components/CakeOrderOptions";
+import JsonLd from "@/components/JsonLd";
+import { cakeJsonLd } from "@/lib/structured-data";
 import {
   getPublishedCakeBySlug,
   getPublishedCakes,
@@ -25,9 +27,19 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const cake = await getPublishedCakeBySlug(slug);
   if (!cake) return { title: "Cake Not Found" };
+  const description =
+    cake.description.length > 160
+      ? `${cake.description.slice(0, 157).trimEnd()}…`
+      : cake.description;
   return {
     title: cake.name,
-    description: cake.description,
+    description,
+    alternates: { canonical: `/cakes/${cake.slug}` },
+    openGraph: {
+      title: `${cake.name} | Tarto Cakes UG`,
+      description,
+      images: cake.image ? [{ url: cake.image, alt: cake.name }] : undefined,
+    },
   };
 }
 
@@ -47,6 +59,7 @@ export default async function CakeDetailPage({ params }: Props) {
 
   return (
     <>
+      <JsonLd data={cakeJsonLd(cake)} />
       <section className="bg-tarto-cream py-8 lg:py-12">
         <div className="site-container grid items-start gap-8 lg:grid-cols-[480px_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[520px_minmax(0,1fr)]">
           <CakeImageGallery

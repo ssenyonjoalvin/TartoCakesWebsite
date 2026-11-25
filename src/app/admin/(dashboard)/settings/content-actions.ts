@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { redirect } from "next/navigation";
 import { getAdminSession } from "@/lib/auth";
 import {
@@ -29,6 +30,7 @@ async function requireSession() {
 }
 
 function revalidatePublic() {
+  updateTag(CACHE_TAGS.settings);
   revalidatePath("/", "layout");
 }
 

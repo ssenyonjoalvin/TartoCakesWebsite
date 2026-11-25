@@ -24,7 +24,8 @@ export default function WhatsAppFloat({ number }: Props) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with Tarto Cakes on WhatsApp"
-      className="fixed bottom-4 right-4 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#187540] text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:scale-105 sm:bottom-6 sm:right-6"
+      title="Chat with us on WhatsApp"
+      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#187540] text-white shadow-[0_8px_28px_rgba(24,117,64,0.35)] ring-2 ring-white transition hover:scale-105 hover:bg-[#125e33] motion-reduce:transform-none sm:bottom-6 sm:right-6 sm:h-16 sm:w-16"
     >
       <WhatsAppIcon className="h-7 w-7" />
     </a>

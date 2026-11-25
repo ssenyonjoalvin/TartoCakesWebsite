@@ -1,4 +1,6 @@
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
+import { CACHE_SECONDS, CACHE_TAGS } from "@/lib/cache-tags";
 import { prisma } from "@/lib/prisma";
 import type { Cake } from "@/data/cakes";
 import {
@@ -19,7 +21,7 @@ function asStringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string");
 }
 
-export const getPublishedCakes = cache(async (): Promise<PublicCake[]> => {
+async function loadPublishedCakes(): Promise<PublicCake[]> {
   const cakes = await prisma.cake.findMany({
     where: { published: true },
     include: { occasion: true, flavor: true },
@@ -62,15 +64,33 @@ export const getPublishedCakes = cache(async (): Promise<PublicCake[]> => {
       reviewSummary: reviewSummaries.get(cake.id) ?? emptyReviewSummary(),
     };
   });
-});
+}
 
-export const getActiveOccasions = cache(async () => {
-  return prisma.occasion.findMany({
-    where: { active: true },
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    select: { slug: true, name: true },
-  });
-});
+/**
+ * Two cache layers:
+ * - unstable_cache shares the result across requests (one DB round-trip per
+ *   CACHE_SECONDS or per admin change, instead of one per visitor);
+ * - React cache() dedupes calls within a single render.
+ */
+export const getPublishedCakes = cache(
+  unstable_cache(loadPublishedCakes, ["published-cakes"], {
+    tags: [CACHE_TAGS.catalog],
+    revalidate: CACHE_SECONDS,
+  })
+);
+
+export const getActiveOccasions = cache(
+  unstable_cache(
+    () =>
+      prisma.occasion.findMany({
+        where: { active: true },
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        select: { slug: true, name: true },
+      }),
+    ["active-occasions"],
+    { tags: [CACHE_TAGS.catalog], revalidate: CACHE_SECONDS }
+  )
+);
 
 export async function getPublishedCakeBySlug(
   slug: string

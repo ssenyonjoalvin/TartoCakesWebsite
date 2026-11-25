@@ -8,8 +8,9 @@ import {
   MAX_QUOTE_IMAGES,
   saveQuoteImages,
 } from "@/lib/quote-images";
-import { CUSTOM_CAKE, HONEYPOT_FIELD, OTHER_OCCASION } from "@/lib/quote-form";
+import { CUSTOM_CAKE, HONEYPOT_FIELD, OTHER_OCCASION, parseEventDate, todayInKampala } from "@/lib/quote-form";
 import { clientIp, isRateLimited } from "@/lib/rate-limit";
+import { grantQuoteAccess } from "@/lib/quote-access";
 
 export type QuoteField =
   | "name"
@@ -77,10 +78,11 @@ export async function submitQuoteRequest(
   const isOther = occasionChoice === OTHER_OCCASION;
 
   if (name.length < 2) fieldErrors.name = "Please enter your name.";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  else if (name.length > 100) fieldErrors.name = "Please keep your name under 100 characters.";
+  if (email.length > 191 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     fieldErrors.email = "Please enter a valid email address.";
   }
-  if (phone.replace(/\D/g, "").length < 9) {
+  if (!/^[+\d\s().-]+$/.test(phone) || phone.replace(/\D/g, "").length < 9 || phone.replace(/\D/g, "").length > 15 || phone.length > 40) {
     fieldErrors.phone = "Please enter a valid phone number.";
   }
   if (!occasionChoice) fieldErrors.occasionId = "Please select an occasion.";
@@ -90,7 +92,10 @@ export async function submitQuoteRequest(
     fieldErrors.occasionOther = "Please keep this under 120 characters.";
   }
   if (!size) fieldErrors.size = "Please select a size.";
+  else if (size.length > 100) fieldErrors.size = "Please choose a shorter size description.";
   if (!flavor) fieldErrors.flavor = "Please select a flavour.";
+  else if (flavor.length > 100) fieldErrors.flavor = "Please choose a shorter flavour description.";
+  if (cakeType.length > 191) return { error: "Please choose a valid cake." };
   if (message.length > 120) {
     fieldErrors.message = "Cake wording must be 120 characters or fewer.";
   }
@@ -115,12 +120,10 @@ export async function submitQuoteRequest(
   if (!eventDateRaw) {
     fieldErrors.eventDate = "Please choose when you need the cake.";
   } else {
-    eventDate = new Date(`${eventDateRaw}T12:00:00`);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (Number.isNaN(eventDate.getTime())) {
+    eventDate = parseEventDate(eventDateRaw);
+    if (!eventDate) {
       fieldErrors.eventDate = "Please enter a valid date.";
-    } else if (eventDate < today) {
+    } else if (eventDateRaw < todayInKampala()) {
       fieldErrors.eventDate = "The date cannot be in the past.";
     }
   }
@@ -131,20 +134,6 @@ export async function submitQuoteRequest(
 
   if (Object.keys(fieldErrors).length > 0) {
     return { fieldErrors };
-  }
-
-  let referenceImages: string[] = [];
-  try {
-    referenceImages = await saveQuoteImages(referenceFiles);
-  } catch (error) {
-    return {
-      fieldErrors: {
-        referenceImages:
-          error instanceof Error
-            ? error.message
-            : "We could not upload your cake photos. Please try again.",
-      },
-    };
   }
 
   let orderId: string;
@@ -172,6 +161,13 @@ export async function submitQuoteRequest(
         cakeId = cake.id;
         cakeName = cake.name;
       }
+    }
+
+    let referenceImages: string[];
+    try {
+      referenceImages = await saveQuoteImages(referenceFiles);
+    } catch (error) {
+      return { fieldErrors: { referenceImages: error instanceof Error ? error.message : "We could not upload your cake photos. Please try again." } };
     }
 
     const customer = await prisma.customer.upsert({
@@ -217,5 +213,6 @@ export async function submitQuoteRequest(
   revalidatePath("/admin", "layout");
 
   // redirect() throws, so it must stay outside the try/catch above.
+  await grantQuoteAccess(orderId);
   redirect(`/quote/thank-you?id=${encodeURIComponent(orderId)}`);
 }

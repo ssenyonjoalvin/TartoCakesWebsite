@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ContactOptions from "@/components/ContactOptions";
 import FaqList from "@/components/FaqList";
+import JsonLd from "@/components/JsonLd";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { getSiteSettings, publicFaq } from "@/lib/site-settings";
 
@@ -10,6 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Frequently Asked Questions",
     description:
       "Answers about ordering custom cakes from Tarto Cakes UG in Kampala: notice, delivery, pickup, payment and more.",
+    alternates: { canonical: "/faq" },
     // An empty FAQ page shouldn't appear in search results.
     robots: items.length === 0 ? { index: false } : undefined,
   };
@@ -63,15 +65,7 @@ export default async function FaqPage() {
         </div>
       </div>
 
-      {jsonLd ? (
-        <script
-          type="application/ld+json"
-          // JSON.stringify output is safe here; escape "<" so an answer can't close the script tag.
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-          }}
-        />
-      ) : null}
+      {jsonLd ? <JsonLd data={jsonLd} /> : null}
     </section>
   );
 }

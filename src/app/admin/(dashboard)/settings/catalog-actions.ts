@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth";
@@ -84,6 +85,7 @@ export async function createCatalogItem(
     return { error: "That name is already in use." };
   }
 
+  updateTag(CACHE_TAGS.catalog);
   revalidatePath(paths[kind]);
   revalidatePath("/admin/settings");
   redirect(paths[kind]);
@@ -136,6 +138,7 @@ export async function updateCatalogItem(
     return { error: "Could not save. That name may already be in use." };
   }
 
+  updateTag(CACHE_TAGS.catalog);
   revalidatePath(paths[kind]);
   revalidatePath("/admin/settings");
   redirect(paths[kind]);
@@ -150,6 +153,7 @@ export async function deleteCatalogItem(kind: CatalogKind, formData: FormData) {
   else if (kind === "sizes") await prisma.cakeSize.delete({ where: { id } });
   else await prisma.occasion.delete({ where: { id } });
 
+  updateTag(CACHE_TAGS.catalog);
   revalidatePath(paths[kind]);
   revalidatePath("/admin/settings");
 }
@@ -177,6 +181,7 @@ export async function toggleCatalogItem(kind: CatalogKind, formData: FormData) {
     });
   }
 
+  updateTag(CACHE_TAGS.catalog);
   revalidatePath(paths[kind]);
   revalidatePath("/admin/settings");
 }

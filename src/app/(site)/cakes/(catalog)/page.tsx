@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   title: "Our Cakes",
   description:
     "Browse cakes by occasion and flavour from Tarto Cakes UG — birthdays, weddings, and more in Kampala.",
+  // Filtered views (?occasion=…) all point search engines at the main catalog.
+  alternates: { canonical: "/cakes" },
 };
 
 type Props = {

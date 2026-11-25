@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Design Your Cake",
   description:
     "Design a custom cake with Tarto Cakes UG in a few simple steps: occasion, size, flavour, design and delivery. We confirm the price before baking.",
+  alternates: { canonical: "/design-your-cake" },
 };
 
 async function getBuilderOptions() {

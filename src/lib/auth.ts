@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { ADMIN_SESSION_COOKIE } from "@/lib/admin-session-cookie";
+import { getAuthSecret } from "@/lib/auth-secret";
 import type { AdminRole } from "@/generated/prisma/client";
 
 export { ADMIN_SESSION_COOKIE };
@@ -19,15 +20,14 @@ export type AdminSession = {
   avatarUrl: string | null;
 };
 
-function getSecret() {
-  return process.env.AUTH_SECRET ?? "tarto-dev-secret-change-me";
-}
-
 function getBootstrapEmail() {
   return (process.env.ADMIN_EMAIL ?? "admin@tartocakes.com").trim().toLowerCase();
 }
 
 function getBootstrapPassword() {
+  if (process.env.NODE_ENV === "production" && !process.env.ADMIN_PASSWORD) {
+    throw new Error("Configure ADMIN_PASSWORD before creating the first administrator.");
+  }
   return process.env.ADMIN_PASSWORD ?? "TartoAdmin2026";
 }
 
@@ -73,7 +73,7 @@ export async function verifyAdminCredentials(email: string, password: string) {
 }
 
 function sign(value: string) {
-  return createHmac("sha256", getSecret()).update(value).digest("hex");
+  return createHmac("sha256", getAuthSecret()).update(value).digest("hex");
 }
 
 function encodeSessionCookie(sessionId: string) {

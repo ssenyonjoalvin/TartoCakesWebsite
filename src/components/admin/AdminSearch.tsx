@@ -3,7 +3,6 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -22,11 +21,11 @@ const AdminSearchContext = createContext<AdminSearchValue>({
 
 export function AdminSearchProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [query, setQuery] = useState("");
+  return <SearchState key={pathname}>{children}</SearchState>;
+}
 
-  useEffect(() => {
-    setQuery("");
-  }, [pathname]);
+function SearchState({ children }: { children: ReactNode }) {
+  const [query, setQuery] = useState("");
 
   const value = useMemo(() => ({ query, setQuery }), [query]);
 

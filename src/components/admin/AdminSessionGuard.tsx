@@ -8,31 +8,40 @@ function leaveAdmin() {
 
 export default function AdminLogoutButton() {
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function signOut() {
     if (pending) return;
     setPending(true);
+    setError(null);
     try {
-      await fetch("/api/admin/logout", {
+      const response = await fetch("/api/admin/logout", {
         method: "POST",
         credentials: "same-origin",
         cache: "no-store",
       });
+      if (!response.ok) throw new Error("Sign out failed");
+      const result = await response.json();
+      if (result.ok !== true) throw new Error("Sign out failed");
+      leaveAdmin();
     } catch {
-      // Still leave the dashboard even if the request fails.
+      setError("Could not sign out. Please try again.");
+      setPending(false);
     }
-    leaveAdmin();
   }
 
   return (
-    <button
+    <div className="text-right">
+      <button
       type="button"
       onClick={signOut}
       disabled={pending}
       className="text-sm font-semibold text-tarto-red hover:underline disabled:opacity-70"
     >
       {pending ? "Signing out..." : "Sign out"}
-    </button>
+      </button>
+      {error ? <p role="alert" className="mt-1 text-sm text-tarto-red">{error}</p> : null}
+    </div>
   );
 }
 

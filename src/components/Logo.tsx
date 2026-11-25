@@ -11,7 +11,7 @@ export default function Logo({ className = "", variant = "header" }: Props) {
   return (
     <Link
       href="/"
-      className={`inline-flex items-baseline gap-1.5 transition hover:opacity-90 ${className}`}
+      className={`inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap transition hover:opacity-90 ${className}`}
       aria-label="Tarto Cakes UG — Home"
     >
       <span

@@ -1,6 +1,8 @@
 import CakeCard from "@/components/CakeCard";
 import HomeHero from "@/components/HomeHero";
+import type { Metadata } from "next";
 import FaqList from "@/components/FaqList";
+import JsonLd from "@/components/JsonLd";
 import HowItWorks from "@/components/HowItWorks";
 import OccasionGrid from "@/components/OccasionGrid";
 import ReviewHighlights from "@/components/ReviewHighlights";
@@ -9,6 +11,11 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { getOccasionShowcase, getPublishedCakes } from "@/lib/public-cakes";
 import { getApprovedReviews } from "@/lib/reviews";
 import { getSiteSettings, publicFaq } from "@/lib/site-settings";
+import { bakeryJsonLd } from "@/lib/structured-data";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const features = [
   {
@@ -103,6 +110,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <JsonLd data={bakeryJsonLd()} />
       <HomeHero />
 
       <section className="bg-tarto-yellow">

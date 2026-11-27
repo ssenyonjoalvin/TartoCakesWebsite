@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Pacifico, Poppins } from "next/font/google";
 import "./globals.css";
 import { siteUrl } from "@/lib/site-url";
@@ -52,11 +53,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Shared page content (including the 404 footer) reads database settings.
+  // Render on request so deployments do not require a database connection.
+  await connection();
+
   return (
     <html
       lang="en"

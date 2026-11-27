@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { connection } from "next/server";
 import { getPublishedBlogPosts } from "@/lib/public-blog";
 import { getPublishedCakes } from "@/lib/public-cakes";
 import {
@@ -8,10 +9,10 @@ import {
 } from "@/lib/site-settings";
 import { absoluteUrl } from "@/lib/site-url";
 
-// Rebuilt at most once an hour; the catalog itself is cached separately.
-export const revalidate = 3600;
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Metadata routes do not inherit the root layout's request-time boundary.
+  await connection();
+
   const [cakes, posts, settings] = await Promise.all([
     getPublishedCakes().catch(() => []),
     getPublishedBlogPosts().catch(() => []),

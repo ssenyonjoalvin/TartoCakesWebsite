@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { connection } from "next/server";
 import { cache } from "react";
 import { CACHE_SECONDS, CACHE_TAGS } from "@/lib/cache-tags";
 import { prisma } from "@/lib/prisma";
@@ -101,6 +102,8 @@ const loadSettingRows = unstable_cache(
 );
 
 export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
+  // Keep this outside the catch: Next.js must be able to stop prerendering.
+  await connection();
   try {
     const rows = await loadSettingRows();
     const byKey = new Map(rows.map((row) => [row.key, row.value]));

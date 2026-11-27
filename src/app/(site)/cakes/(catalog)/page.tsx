@@ -53,7 +53,6 @@ export default async function CakesPage({ searchParams }: Props) {
       <div className="site-container">
         <SectionHeading
           as="h1"
-          eyebrow="Cake gallery"
           title="Our Cakes"
           description="Search our collection or filter by occasion and flavour. Every cake can be customised for your celebration."
         />
